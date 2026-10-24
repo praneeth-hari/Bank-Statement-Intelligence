@@ -525,3 +525,16 @@ def test_the_probe_reports_the_vocabulary_baselines(pdf):
     cases = probe.build_cases(Path(pdf).parent, n_damaged=8, n_clean=4, seed=3)
     own, pooled = probe.vocabulary_only(cases), probe.vocabulary_only(cases, True)
     assert pooled["restored"] >= own["restored"] and pooled["clean_changed"] == 0
+
+
+def test_probe_compares_the_model_with_the_vocabulary_rule(pdf):
+    from stmtai.llm import probe
+    cases = probe.build_cases(Path(pdf).parent, n_damaged=8, n_clean=4, seed=3)
+    truth_of = {c["read"]: c["truth"] for c in cases}
+    def perfect(system, user, schema):
+        return {"items": [{"id": json.loads(l)["id"], "text": truth_of[json.loads(l)["text"]]} for l in user.splitlines()]}
+    with FakeOllama(perfect) as srv:
+        res = probe.run(OllamaClient(host=srv.host), cases)
+    v = probe.versus_rule(res)
+    assert v["only_rule"] == 0 and v["both"] + v["only_model"] == 8 and v["neither"] == 0
+    assert "only the model" in probe.render(probe.summarize(res), "fake", 1.0, 1, None, False, v)

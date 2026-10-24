@@ -108,13 +108,33 @@ def run(client: OllamaClient, cases: list[dict[str, Any]], batch: int = 6, hints
     return out
 
 
+def _vocab_fix(c: dict[str, Any], pooled: bool) -> Optional[str]:
+    out = vocab_rule(c["read"], Vocabulary(c["context"] + (c["pool"] if pooled else [])))
+    return out if out and check_description(c["read"], out) is None else None
+
+
+def versus_rule(results: list[dict[str, Any]]) -> dict[str, int]:
+    """Model against the vocabulary rule on the same damaged cases: who got what."""
+    both = only_model = only_rule = neither = 0
+    for r in results:
+        if r["kind"] == "clean":
+            continue
+        model_ok = r["accepted"] and squash(r["answer"]) == squash(r["truth"])
+        fix = _vocab_fix(r, True)
+        rule_ok = fix is not None and squash(fix) == squash(r["truth"])
+        both += model_ok and rule_ok
+        only_model += model_ok and not rule_ok
+        only_rule += rule_ok and not model_ok
+        neither += not model_ok and not rule_ok
+    return {"both": both, "only_model": only_model, "only_rule": only_rule, "neither": neither}
+
+
 def vocabulary_only(cases: list[dict[str, Any]], pooled: bool = False) -> dict[str, int]:
     """Repeated names as the only tool, no model: this statement's own, or also those of other (approved) statements."""
     damaged = [c for c in cases if c["kind"] != "clean"]
     clean = [c for c in cases if c["kind"] == "clean"]
     def fix(c):
-        out = vocab_rule(c["read"], Vocabulary(c["context"] + (c["pool"] if pooled else [])))
-        return out if out and check_description(c["read"], out) is None else None
+        return _vocab_fix(c, pooled)
     right = sum(1 for c in damaged if (fix(c) or "") and squash(fix(c)) == squash(c["truth"]))
     wrong = sum(1 for c in damaged if fix(c) and squash(fix(c)) != squash(c["truth"]))
     return {"damaged": len(damaged), "restored": right, "wrong": wrong, "clean": len(clean),
@@ -135,7 +155,7 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def render(s: dict[str, Any], model: str, seconds: float, calls: int, vocab: Optional[dict[str, dict[str, int]]] = None,
-           hints: bool = False) -> str:
+           hints: bool = False, versus: Optional[dict[str, int]] = None) -> str:
     pct = lambda a, b: f"{100 * a / b:.0f}%" if b else "n/a"  # noqa: E731
     lines = [f"# Dropped-letter probe, model `{model}`" + (" (given names seen on this and other statements)" if hints else ""), "",
              f"**{s['fixed']} of {s['damaged']} damaged descriptions restored exactly ({pct(s['fixed'], s['damaged'])}); "
@@ -148,6 +168,10 @@ def render(s: dict[str, Any], model: str, seconds: float, calls: int, vocab: Opt
     for label, v in (vocab or {}).items():
         lines += ["", f"No model, {label}: {v['restored']} of {v['damaged']} restored, {v['wrong']} wrong, "
                       f"{v['clean_changed']} of {v['clean']} undamaged changed."]
+    if versus:
+        lines += ["", "Model against the vocabulary rule (names also seen on other statements), on the damaged cases:",
+                  f"- both restored it: {versus['both']}", f"- only the model: {versus['only_model']}",
+                  f"- only the rule: {versus['only_rule']}", f"- neither: {versus['neither']}"]
     lines += ["", f"Blocked by the checks: {s['blocked'] or 'none'}", "",
               f"{calls} model calls, {seconds:.0f}s total. Synthetic damage: use this to compare models, not as scan accuracy."]
     return "\n".join(lines)
@@ -177,7 +201,8 @@ def main() -> None:
         raise SystemExit(f"no payment descriptions found in {args.data}")
     results = run(client, cases, hints=args.hints)
     report = render(summarize(results), client.model, client.seconds, client.calls, {"only this statement's repeated names": vocabulary_only(cases),
-                                                                                        "names also seen on other statements": vocabulary_only(cases, True)}, args.hints)
+                                                                                        "names also seen on other statements": vocabulary_only(cases, True)}, args.hints,
+                    versus_rule(results))
     print("\n" + report)
     if args.out:
         import json
