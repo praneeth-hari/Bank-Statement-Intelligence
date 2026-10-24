@@ -1,0 +1,216 @@
+{
+  "overall": {
+    "docs": 24,
+    "failed_docs": 0,
+    "rows_truth": 1689,
+    "rows_extracted": 1689,
+    "row_recall": 1.0,
+    "row_precision": 1.0,
+    "row_field_accuracy": 1.0,
+    "header_field_accuracy": 1.0,
+    "exact_match_docs": 1.0,
+    "reconcile_rate": 1.0,
+    "per_field_accuracy": {
+      "balance": 1.0,
+      "credit": 1.0,
+      "date": 1.0,
+      "debit": 1.0,
+      "description": 1.0,
+      "ref": 1.0,
+      "value_date": 1.0
+    },
+    "per_header_accuracy": {
+      "account_holder": 1.0,
+      "account_number": 1.0,
+      "bank_name": 1.0,
+      "branch": 1.0,
+      "closing_balance": 1.0,
+      "currency": 1.0,
+      "ifsc": 1.0,
+      "opening_balance": 1.0,
+      "period_end": 1.0,
+      "period_start": 1.0
+    },
+    "review": {
+      "threshold": 0.9,
+      "fields_compared": 8078,
+      "fields_flagged": 0,
+      "flag_rate": 0.0,
+      "wrong_fields": 0,
+      "wrong_caught_by_flags": 0,
+      "error_recall": null,
+      "flag_precision": null
+    }
+  },
+  "by_layout": {
+    "classic_grid": {
+      "docs": 6,
+      "failed_docs": 0,
+      "rows_truth": 431,
+      "rows_extracted": 431,
+      "row_recall": 1.0,
+      "row_precision": 1.0,
+      "row_field_accuracy": 1.0,
+      "header_field_accuracy": 1.0,
+      "exact_match_docs": 1.0,
+      "reconcile_rate": 1.0,
+      "per_field_accuracy": {
+        "balance": 1.0,
+        "credit": 1.0,
+        "date": 1.0,
+        "debit": 1.0,
+        "description": 1.0,
+        "ref": 1.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "fields_compared": 2115,
+        "fields_flagged": 0,
+        "flag_rate": 0.0,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      }
+    },
+    "drcr_single_amount": {
+      "docs": 6,
+      "failed_docs": 0,
+      "rows_truth": 417,
+      "rows_extracted": 417,
+      "row_recall": 1.0,
+      "row_precision": 1.0,
+      "row_field_accuracy": 1.0,
+      "header_field_accuracy": 1.0,
+      "exact_match_docs": 1.0,
+      "reconcile_rate": 1.0,
+      "per_field_accuracy": {
+        "balance": 1.0,
+        "credit": 1.0,
+        "date": 1.0,
+        "debit": 1.0,
+        "description": 1.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "fields_compared": 1728,
+        "fields_flagged": 0,
+        "flag_rate": 0.0,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      }
+    },
+    "modern_zebra": {
+      "docs": 6,
+      "failed_docs": 0,
+      "rows_truth": 411,
+      "rows_extracted": 411,
+      "row_recall": 1.0,
+      "row_precision": 1.0,
+      "row_field_accuracy": 1.0,
+      "header_field_accuracy": 1.0,
+      "exact_match_docs": 1.0,
+      "reconcile_rate": 1.0,
+      "per_field_accuracy": {
+        "balance": 1.0,
+        "credit": 1.0,
+        "date": 1.0,
+        "debit": 1.0,
+        "description": 1.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "fields_compared": 1704,
+        "fields_flagged": 0,
+        "flag_rate": 0.0,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      }
+    },
+    "wrapped_two_date": {
+      "docs": 6,
+      "failed_docs": 0,
+      "rows_truth": 430,
+      "rows_extracted": 430,
+      "row_recall": 1.0,
+      "row_precision": 1.0,
+      "row_field_accuracy": 1.0,
+      "header_field_accuracy": 1.0,
+      "exact_match_docs": 1.0,
+      "reconcile_rate": 1.0,
+      "per_field_accuracy": {
+        "balance": 1.0,
+        "credit": 1.0,
+        "date": 1.0,
+        "debit": 1.0,
+        "description": 1.0,
+        "ref": 1.0,
+        "value_date": 1.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "fields_compared": 2531,
+        "fields_flagged": 0,
+        "flag_rate": 0.0,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      }
+    }
+  },
+  "errors": [],
+  "failures": []
+}
