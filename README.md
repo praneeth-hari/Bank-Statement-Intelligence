@@ -3,9 +3,9 @@
 Extract transactions from bank statements (digital PDFs and messy scans), score how much to trust
 every field, and send only the uncertain ones to a human reviewer. Corrections feed an evaluation loop.
 
-> **Status:** steps 1-3 of 7 complete: synthetic data with ground truth, digital-PDF extraction, an OCR
-> path for scans, reconciliation-based confidence scoring, and an evaluation harness. Engine benchmark,
-> API and review UI are next.
+> **Status:** steps 1-5 of 7 complete: synthetic data with ground truth, digital-PDF and scan extraction,
+> reconciliation-based confidence scoring, an evaluation harness, an OCR engine benchmark and an HTTP API
+> with a review workflow. The React review UI is next.
 
 All data in this repository is **synthetic**. Banks, people, accounts and IFSC codes are fictional,
 and every generated page is stamped as a sample. No real customer data is used or needed.
@@ -118,6 +118,43 @@ Amount recall compares digits only, so it is lenient about separators on purpose
   scored with the text benchmark. `notebooks/unlimited_ocr_colab.ipynb` runs it on a free GPU and writes
   the text files this benchmark reads. **That run has not been done yet**, so it is not in the table.
 
+## The API (step 5)
+
+```bash
+pip install -e ".[dev,ocr,api]"
+python -m stmtai.api                      # http://127.0.0.1:8000, interactive docs at /docs
+```
+
+| Endpoint | What it does |
+|---|---|
+| `POST /statements` | Upload a PDF. Returns `202` at once; extraction (and OCR for scans) runs in the background. |
+| `GET /statements/{id}` | Status, page sizes, every field with value, confidence, flags, bounding box and suggestion. |
+| `GET /statements/{id}/review` | Only the fields that need a human, each with plain-language reasons. `?order=confidence` for worst first. |
+| `GET /statements/{id}/pages/{n}.png` | The page image the boxes are drawn on. |
+| `POST /statements/{id}/corrections` | `confirm`, `correct` (with a value) or `accept_suggestion` for one cell. Returns how many cells still need review. |
+| `DELETE /statements/{id}/corrections/{cid}` | Undo. |
+| `POST /statements/{id}/approve` | Sign off. Refused (`409`) while cells still need review, unless `?force=true`. Approved statements are frozen until reopened. |
+| `GET /statements/{id}/export.csv` / `.json` | Corrected data, with a header saying how many fields were never reviewed. |
+| `GET /feedback` | How well the confidence scores matched what reviewers actually did. |
+
+Design decisions worth knowing:
+
+- **The raw extraction is stored once and never modified.** Every view is rebuilt as *raw, then human
+  corrections, then re-score*. So fixing one wrong balance re-runs the balance check and clears the flags it
+  caused on neighbouring rows, instead of leaving a stale queue. Corrections are an append-only log; undo is
+  deleting a row.
+- **The correction log is evaluation data.** It records what the reviewer saw (value, confidence, flags,
+  whether it was flagged) and what they did. `/feedback` turns that into flag precision (of flagged cells a
+  human looked at, how many were really wrong), suggestion accept rate, and *unflagged cells that still needed
+  correcting*. The last number is a lower bound, since reviewers mostly look at flagged cells.
+- **Safe by default for a local service:** PDFs only (checked by content, not extension), size limit
+  (`STMTAI_MAX_UPLOAD_MB`, default 25), optional `X-API-Key` (`STMTAI_API_KEY`), CORS limited to the Vite dev
+  server (`STMTAI_CORS_ORIGINS`). Storage is SQLite plus files under `data/api/`.
+
+Limitations, stated plainly: extraction runs in a background thread of one process (fine for a demo or a
+small team, not a queue for thousands of documents); a row the OCR dropped entirely can be detected but not
+inserted yet; there is no user model, so corrections are not attributed to a person.
+
 ## How confidence works
 
 The running balance is the strongest correctness signal a statement has:
@@ -203,7 +240,7 @@ whether that held.
 2. [x] Digital extraction, confidence scoring, evaluation + robustness harness
 3. [x] Scan path: deskew, OCR with confidence, tolerant table reconstruction, calibration
 4. [~] Benchmark OCR engines on the same labelled scans (RapidOCR, Tesseract done; Unlimited-OCR notebook ready, not yet run)
-5. [ ] FastAPI service
+5. [x] FastAPI service: upload, review queue, corrections with undo, approval, export, feedback metrics
 6. [ ] React review UI (page image with boxes, editable table, low-confidence cells highlighted)
 7. [ ] LLM fallback for messy rows, natural-language query layer, Docker, demo video
 
@@ -217,6 +254,8 @@ src/stmtai/
   robustness.py    injected-error detection harness
   calibrate.py     per-field review threshold sweep on held-out data
   benchmark.py     engine-independent OCR text benchmark (amount/date/reference recall)
+  feedback.py      flag quality measured from reviewer corrections
+  api/             FastAPI app, storage and view-building (raw -> corrections -> re-score)
   extract/
     digital.py     table extraction shared by both paths (header band, columns, rows, markers)
     scanned.py     OCR path; ocr.py engine wrapper, deskew, cache; preprocess.py cleanup recipes
@@ -225,7 +264,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             132 tests, including negative controls for the evaluator itself
+tests/             156 tests, including negative controls for the evaluator itself
 samples/           a few generated documents
 notebooks/         Colab notebook for GPU-only OCR engines
 reports/           committed output of the evaluation and robustness runs

@@ -10,3 +10,5 @@ dist/
 .env
 data/calibration/
 data/ocr_cache/
+data/api/
+data/bench/

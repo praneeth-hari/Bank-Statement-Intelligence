@@ -13,13 +13,19 @@ DEFAULT_CACHE = Path("data/ocr_cache")
 
 
 def extract_pdf(path: str | Path, ocr: bool = True, ocr_backend=None,
-                cache_dir: Optional[Path] = DEFAULT_CACHE, preprocess: str = "none") -> ExtractedStatement:
-    """Use the text layer when there is one; otherwise fall back to OCR (unless ``ocr=False``)."""
+                cache_dir: Optional[Path] = DEFAULT_CACHE, preprocess: str = "none",
+                scored: bool = True) -> ExtractedStatement:
+    """Use the text layer when there is one; otherwise fall back to OCR (unless ``ocr=False``).
+
+    ``scored=False`` returns the raw extraction. The API stores that and re-scores it after every human
+    correction, so a fixed cell can clear the flags it was causing on its neighbours.
+    """
+    finish = score if scored else (lambda ext: ext)
     try:
-        return score(extract_digital(path))
+        return finish(extract_digital(path))
     except NotDigitalError:
         if not ocr:
             raise
     from .scanned import extract_scan  # imported lazily so the digital path never needs OCR installed
 
-    return score(extract_scan(path, backend=ocr_backend, cache_dir=cache_dir, preprocess=preprocess))
+    return finish(extract_scan(path, backend=ocr_backend, cache_dir=cache_dir, preprocess=preprocess))

@@ -2,40 +2,17 @@
 
 from pathlib import Path
 
-import fitz
-import numpy as np
 import pytest
 
 from stmtai.calibrate import sweep
 from stmtai.evaluate import Label, evaluate_pair, values_equal
-from stmtai.extract.ocr import DEFAULT_DPI, ocr_pdf
+from stmtai.extract.ocr import ocr_pdf
 from stmtai.extract.pipeline import extract_pdf
 from stmtai.extract.scanned import extract_scan
 from stmtai.extract.scoring import REVIEW_THRESHOLDS, REVIEW_THRESHOLD, review_items, score, threshold_for
 from stmtai.extract.text import digit_runs, reference_matches, snap_prefix
+from replay import ReplayBackend
 from stmtai.synth.generate import build_dataset
-
-
-class ReplayBackend:
-    """Pretends to be an OCR engine by returning the digital twin's words as segments (pixel coordinates)."""
-    name = "replay"
-
-    def __init__(self, digital_pdf: Path, mangle=None):
-        doc = fitz.open(digital_pdf)
-        k = DEFAULT_DPI / 72
-        self.pages = []
-        for page in doc:
-            segs = []
-            for x0, y0, x1, y1, text, *_ in page.get_text("words"):
-                text = mangle(text) if mangle else text
-                segs.append(([[x0 * k, y0 * k], [x1 * k, y0 * k], [x1 * k, y1 * k], [x0 * k, y1 * k]], text, 0.97))
-            self.pages.append(segs)
-        self.calls = 0
-
-    def read(self, image: np.ndarray):
-        segs = self.pages[min(self.calls, len(self.pages) - 1)]
-        self.calls += 1
-        return segs
 
 
 @pytest.fixture(scope="module")
