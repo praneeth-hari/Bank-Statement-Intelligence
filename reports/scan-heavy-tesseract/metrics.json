@@ -1,0 +1,365 @@
+{
+  "overall": {
+    "docs": 12,
+    "failed_docs": 12,
+    "rows_truth": 983,
+    "rows_extracted": 0,
+    "row_recall": 0.0,
+    "row_precision": null,
+    "row_field_accuracy": 0.0,
+    "financial_field_accuracy": 0.0,
+    "text_char_accuracy": {},
+    "header_field_accuracy": 0.0,
+    "exact_match_docs": 0.0,
+    "reconcile_rate": 0.0,
+    "per_field_accuracy": {
+      "balance": 0.0,
+      "credit": 0.0,
+      "date": 0.0,
+      "debit": 0.0,
+      "description": 0.0,
+      "ref": 0.0,
+      "value_date": 0.0
+    },
+    "per_header_accuracy": {
+      "account_holder": 0.0,
+      "account_number": 0.0,
+      "bank_name": 0.0,
+      "branch": 0.0,
+      "closing_balance": 0.0,
+      "currency": 0.0,
+      "ifsc": 0.0,
+      "opening_balance": 0.0,
+      "period_end": 0.0,
+      "period_start": 0.0
+    },
+    "review": {
+      "threshold": 0.9,
+      "field_thresholds": {
+        "description": 0.8
+      },
+      "by_field": {},
+      "fields_compared": 0,
+      "fields_flagged": 0,
+      "flag_rate": null,
+      "wrong_fields": 0,
+      "wrong_caught_by_flags": 0,
+      "error_recall": null,
+      "flag_precision": null
+    },
+    "suggestions": {
+      "total": 0,
+      "correct": 0,
+      "precision": null,
+      "verified_total": 0,
+      "verified_precision": null,
+      "unverified_precision": null,
+      "fixes_errors": 0,
+      "breaks_correct": 0
+    },
+    "after_suggestions": {
+      "row_field_accuracy": null,
+      "per_field_accuracy": {}
+    }
+  },
+  "by_layout": {
+    "classic_grid": {
+      "docs": 3,
+      "failed_docs": 3,
+      "rows_truth": 274,
+      "rows_extracted": 0,
+      "row_recall": 0.0,
+      "row_precision": null,
+      "row_field_accuracy": 0.0,
+      "financial_field_accuracy": 0.0,
+      "text_char_accuracy": {},
+      "header_field_accuracy": 0.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0,
+        "credit": 0.0,
+        "date": 0.0,
+        "debit": 0.0,
+        "description": 0.0,
+        "ref": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.0,
+        "branch": 0.0,
+        "closing_balance": 0.0,
+        "currency": 0.0,
+        "ifsc": 0.0,
+        "opening_balance": 0.0,
+        "period_end": 0.0,
+        "period_start": 0.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {},
+        "fields_compared": 0,
+        "fields_flagged": 0,
+        "flag_rate": null,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": null,
+        "per_field_accuracy": {}
+      }
+    },
+    "drcr_single_amount": {
+      "docs": 3,
+      "failed_docs": 3,
+      "rows_truth": 230,
+      "rows_extracted": 0,
+      "row_recall": 0.0,
+      "row_precision": null,
+      "row_field_accuracy": 0.0,
+      "financial_field_accuracy": 0.0,
+      "text_char_accuracy": {},
+      "header_field_accuracy": 0.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0,
+        "credit": 0.0,
+        "date": 0.0,
+        "debit": 0.0,
+        "description": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.0,
+        "branch": 0.0,
+        "closing_balance": 0.0,
+        "currency": 0.0,
+        "ifsc": 0.0,
+        "opening_balance": 0.0,
+        "period_end": 0.0,
+        "period_start": 0.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {},
+        "fields_compared": 0,
+        "fields_flagged": 0,
+        "flag_rate": null,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": null,
+        "per_field_accuracy": {}
+      }
+    },
+    "modern_zebra": {
+      "docs": 3,
+      "failed_docs": 3,
+      "rows_truth": 227,
+      "rows_extracted": 0,
+      "row_recall": 0.0,
+      "row_precision": null,
+      "row_field_accuracy": 0.0,
+      "financial_field_accuracy": 0.0,
+      "text_char_accuracy": {},
+      "header_field_accuracy": 0.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0,
+        "credit": 0.0,
+        "date": 0.0,
+        "debit": 0.0,
+        "description": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.0,
+        "branch": 0.0,
+        "closing_balance": 0.0,
+        "currency": 0.0,
+        "ifsc": 0.0,
+        "opening_balance": 0.0,
+        "period_end": 0.0,
+        "period_start": 0.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {},
+        "fields_compared": 0,
+        "fields_flagged": 0,
+        "flag_rate": null,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": null,
+        "per_field_accuracy": {}
+      }
+    },
+    "wrapped_two_date": {
+      "docs": 3,
+      "failed_docs": 3,
+      "rows_truth": 252,
+      "rows_extracted": 0,
+      "row_recall": 0.0,
+      "row_precision": null,
+      "row_field_accuracy": 0.0,
+      "financial_field_accuracy": 0.0,
+      "text_char_accuracy": {},
+      "header_field_accuracy": 0.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0,
+        "credit": 0.0,
+        "date": 0.0,
+        "debit": 0.0,
+        "description": 0.0,
+        "ref": 0.0,
+        "value_date": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.0,
+        "branch": 0.0,
+        "closing_balance": 0.0,
+        "currency": 0.0,
+        "ifsc": 0.0,
+        "opening_balance": 0.0,
+        "period_end": 0.0,
+        "period_start": 0.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {},
+        "fields_compared": 0,
+        "fields_flagged": 0,
+        "flag_rate": null,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": null,
+        "per_field_accuracy": {}
+      }
+    }
+  },
+  "errors": [],
+  "failures": [
+    {
+      "doc": "classic_grid_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of classic_grid_00__scan_heavy.pdf"
+    },
+    {
+      "doc": "classic_grid_02",
+      "error": "ExtractionError: no transaction table header found on page 1 of classic_grid_02__scan_heavy.pdf"
+    },
+    {
+      "doc": "classic_grid_05",
+      "error": "ExtractionError: no transaction table header found on page 1 of classic_grid_05__scan_heavy.pdf"
+    },
+    {
+      "doc": "drcr_single_amount_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of drcr_single_amount_00__scan_heavy.pdf"
+    },
+    {
+      "doc": "drcr_single_amount_02",
+      "error": "ExtractionError: no transaction table header found on page 1 of drcr_single_amount_02__scan_heavy.pdf"
+    },
+    {
+      "doc": "drcr_single_amount_05",
+      "error": "ExtractionError: no transaction table header found on page 1 of drcr_single_amount_05__scan_heavy.pdf"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of modern_zebra_00__scan_heavy.pdf"
+    },
+    {
+      "doc": "modern_zebra_02",
+      "error": "ExtractionError: no transaction table header found on page 1 of modern_zebra_02__scan_heavy.pdf"
+    },
+    {
+      "doc": "modern_zebra_05",
+      "error": "ExtractionError: no transaction table header found on page 1 of modern_zebra_05__scan_heavy.pdf"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of wrapped_two_date_00__scan_heavy.pdf"
+    },
+    {
+      "doc": "wrapped_two_date_02",
+      "error": "ExtractionError: no transaction table header found on page 1 of wrapped_two_date_02__scan_heavy.pdf"
+    },
+    {
+      "doc": "wrapped_two_date_05",
+      "error": "ExtractionError: no transaction table header found on page 1 of wrapped_two_date_05__scan_heavy.pdf"
+    }
+  ]
+}

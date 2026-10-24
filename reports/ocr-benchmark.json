@@ -1,0 +1,102 @@
+[
+  {
+    "engine": "rapidocr",
+    "kind": "scan_light",
+    "docs": 8,
+    "amount_recall": 1.0,
+    "amount_precision": 0.9511,
+    "date_recall": 1.0,
+    "ref_recall": 1.0,
+    "true_amounts": 584
+  },
+  {
+    "engine": "rapidocr",
+    "kind": "scan_medium",
+    "docs": 12,
+    "amount_recall": 0.9856,
+    "amount_precision": 0.9608,
+    "date_recall": 0.9842,
+    "ref_recall": 0.9981,
+    "true_amounts": 1392
+  },
+  {
+    "engine": "rapidocr",
+    "kind": "scan_heavy",
+    "docs": 12,
+    "amount_recall": 0.1348,
+    "amount_precision": 0.5126,
+    "date_recall": 0.1679,
+    "ref_recall": 0.1818,
+    "true_amounts": 1966
+  },
+  {
+    "engine": "tesseract",
+    "kind": "scan_light",
+    "docs": 8,
+    "amount_recall": 0.9983,
+    "amount_precision": 0.9495,
+    "date_recall": 0.7568,
+    "ref_recall": 0.9909,
+    "true_amounts": 584
+  },
+  {
+    "engine": "tesseract",
+    "kind": "scan_medium",
+    "docs": 12,
+    "amount_recall": 0.7105,
+    "amount_precision": 0.891,
+    "date_recall": 0.4914,
+    "ref_recall": 0.6679,
+    "true_amounts": 1392
+  },
+  {
+    "engine": "tesseract",
+    "kind": "scan_heavy",
+    "docs": 12,
+    "amount_recall": 0.028,
+    "amount_precision": 0.1495,
+    "date_recall": 0.0549,
+    "ref_recall": 0.0014,
+    "true_amounts": 1966
+  },
+  {
+    "engine": "tesseract+flat",
+    "kind": "scan_medium",
+    "docs": 12,
+    "amount_recall": 0.6681,
+    "amount_precision": 0.8627,
+    "date_recall": 0.4957,
+    "ref_recall": 0.6528,
+    "true_amounts": 1392
+  },
+  {
+    "engine": "tesseract+flat",
+    "kind": "scan_heavy",
+    "docs": 12,
+    "amount_recall": 0.0224,
+    "amount_precision": 0.1654,
+    "date_recall": 0.0387,
+    "ref_recall": 0.0027,
+    "true_amounts": 1966
+  },
+  {
+    "engine": "tesseract+flat_denoise",
+    "kind": "scan_medium",
+    "docs": 12,
+    "amount_recall": 0.7349,
+    "amount_precision": 0.9175,
+    "date_recall": 0.5086,
+    "ref_recall": 0.683,
+    "true_amounts": 1392
+  },
+  {
+    "engine": "tesseract+flat_denoise",
+    "kind": "scan_heavy",
+    "docs": 12,
+    "amount_recall": 0.057,
+    "amount_precision": 0.1895,
+    "date_recall": 0.0641,
+    "ref_recall": 0.0081,
+    "true_amounts": 1966
+  }
+]

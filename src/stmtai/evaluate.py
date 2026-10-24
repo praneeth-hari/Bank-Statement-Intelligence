@@ -380,9 +380,16 @@ def main() -> None:
     parser.add_argument("--data", type=Path, default=Path("data/synthetic"))
     parser.add_argument("--kind", default="digital", help="digital, scan_light, scan_medium or scan_heavy")
     parser.add_argument("--out", type=Path, default=None, help="directory for metrics.json and report.md")
+    parser.add_argument("--engine", default="rapidocr", help="rapidocr, tesseract, or cached:<engine> (scans only)")
     args = parser.parse_args()
 
-    docs = evaluate_dataset(args.data, args.kind)
+    extractor: Callable[[Path], ExtractedStatement] = extract_pdf
+    if args.kind != "digital":
+        from .extract.ocr import get_backend
+
+        backend = get_backend(args.engine)
+        extractor = lambda p: extract_pdf(p, ocr_backend=backend)  # noqa: E731
+    docs = evaluate_dataset(args.data, args.kind, extractor)
     if not docs:
         raise SystemExit(f"no documents of kind '{args.kind}' found in {args.data}")
     summary = summarize(docs)

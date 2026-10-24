@@ -1,0 +1,1280 @@
+{
+  "overall": {
+    "docs": 8,
+    "failed_docs": 0,
+    "rows_truth": 292,
+    "rows_extracted": 307,
+    "row_recall": 0.9281,
+    "row_precision": 0.8827,
+    "row_field_accuracy": 0.8417,
+    "financial_field_accuracy": 0.8373,
+    "text_char_accuracy": {
+      "description": 0.8308,
+      "ref": 0.9021
+    },
+    "header_field_accuracy": 0.9625,
+    "exact_match_docs": 0.125,
+    "reconcile_rate": 0.375,
+    "per_field_accuracy": {
+      "balance": 0.7671,
+      "credit": 0.9007,
+      "date": 0.8425,
+      "debit": 0.839,
+      "description": 0.8048,
+      "ref": 0.8954,
+      "value_date": 0.9375
+    },
+    "per_header_accuracy": {
+      "account_holder": 1.0,
+      "account_number": 0.875,
+      "bank_name": 1.0,
+      "branch": 1.0,
+      "closing_balance": 0.875,
+      "currency": 1.0,
+      "ifsc": 1.0,
+      "opening_balance": 0.875,
+      "period_end": 1.0,
+      "period_start": 1.0
+    },
+    "review": {
+      "threshold": 0.9,
+      "field_thresholds": {
+        "description": 0.8
+      },
+      "by_field": {
+        "account_holder": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.375,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "account_number": {
+          "threshold": 0.9,
+          "n": 7,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "balance": {
+          "threshold": 0.9,
+          "n": 237,
+          "flag_rate": 0.0675,
+          "wrong": 13,
+          "wrong_caught": 13
+        },
+        "bank_name": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "branch": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.75,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "closing_balance": {
+          "threshold": 0.9,
+          "n": 7,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "credit": {
+          "threshold": 0.9,
+          "n": 59,
+          "flag_rate": 0.0678,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "currency": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "date": {
+          "threshold": 0.9,
+          "n": 264,
+          "flag_rate": 0.072,
+          "wrong": 18,
+          "wrong_caught": 18
+        },
+        "debit": {
+          "threshold": 0.9,
+          "n": 179,
+          "flag_rate": 0.0447,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "description": {
+          "threshold": 0.8,
+          "n": 244,
+          "flag_rate": 0.5287,
+          "wrong": 9,
+          "wrong_caught": 6
+        },
+        "ifsc": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.25,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "opening_balance": {
+          "threshold": 0.9,
+          "n": 7,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "period_end": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "period_start": {
+          "threshold": 0.9,
+          "n": 8,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "ref": {
+          "threshold": 0.9,
+          "n": 108,
+          "flag_rate": 0.0648,
+          "wrong": 5,
+          "wrong_caught": 5
+        },
+        "value_date": {
+          "threshold": 0.9,
+          "n": 75,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        }
+      },
+      "fields_compared": 1243,
+      "fields_flagged": 194,
+      "flag_rate": 0.1561,
+      "wrong_fields": 45,
+      "wrong_caught_by_flags": 42,
+      "error_recall": 0.9333,
+      "flag_precision": 0.2165
+    },
+    "suggestions": {
+      "total": 14,
+      "correct": 13,
+      "precision": 0.9286,
+      "verified_total": 11,
+      "verified_precision": 0.9091,
+      "unverified_precision": 1.0,
+      "fixes_errors": 13,
+      "breaks_correct": 1
+    },
+    "after_suggestions": {
+      "row_field_accuracy": 0.8488,
+      "per_field_accuracy": {
+        "balance": 0.8116,
+        "credit": 0.9007,
+        "date": 0.8425,
+        "debit": 0.8356,
+        "description": 0.8048,
+        "ref": 0.8954,
+        "value_date": 0.9375
+      }
+    }
+  },
+  "by_layout": {
+    "classic_grid": {
+      "docs": 2,
+      "failed_docs": 0,
+      "rows_truth": 73,
+      "rows_extracted": 73,
+      "row_recall": 1.0,
+      "row_precision": 1.0,
+      "row_field_accuracy": 0.9726,
+      "financial_field_accuracy": 0.9966,
+      "text_char_accuracy": {
+        "description": 0.9957,
+        "ref": 0.991
+      },
+      "header_field_accuracy": 1.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.5,
+      "per_field_accuracy": {
+        "balance": 0.9863,
+        "credit": 1.0,
+        "date": 1.0,
+        "debit": 1.0,
+        "description": 0.9178,
+        "ref": 0.9315
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {
+          "account_holder": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "account_number": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "balance": {
+            "threshold": 0.9,
+            "n": 73,
+            "flag_rate": 0.0137,
+            "wrong": 1,
+            "wrong_caught": 1
+          },
+          "bank_name": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "branch": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "closing_balance": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "credit": {
+            "threshold": 0.9,
+            "n": 14,
+            "flag_rate": 0.0714,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "currency": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "date": {
+            "threshold": 0.9,
+            "n": 73,
+            "flag_rate": 0.0137,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "debit": {
+            "threshold": 0.9,
+            "n": 60,
+            "flag_rate": 0.0167,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "description": {
+            "threshold": 0.8,
+            "n": 73,
+            "flag_rate": 0.4932,
+            "wrong": 6,
+            "wrong_caught": 5
+          },
+          "ifsc": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "opening_balance": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_end": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_start": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "ref": {
+            "threshold": 0.9,
+            "n": 58,
+            "flag_rate": 0.1034,
+            "wrong": 5,
+            "wrong_caught": 5
+          }
+        },
+        "fields_compared": 371,
+        "fields_flagged": 49,
+        "flag_rate": 0.1321,
+        "wrong_fields": 12,
+        "wrong_caught_by_flags": 11,
+        "error_recall": 0.9167,
+        "flag_precision": 0.2245
+      },
+      "suggestions": {
+        "total": 1,
+        "correct": 1,
+        "precision": 1.0,
+        "verified_total": 1,
+        "verified_precision": 1.0,
+        "unverified_precision": null,
+        "fixes_errors": 1,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": 0.9749,
+        "per_field_accuracy": {
+          "balance": 1.0,
+          "credit": 1.0,
+          "date": 1.0,
+          "debit": 1.0,
+          "description": 0.9178,
+          "ref": 0.9315
+        }
+      }
+    },
+    "drcr_single_amount": {
+      "docs": 2,
+      "failed_docs": 0,
+      "rows_truth": 68,
+      "rows_extracted": 68,
+      "row_recall": 1.0,
+      "row_precision": 1.0,
+      "row_field_accuracy": 1.0,
+      "financial_field_accuracy": 1.0,
+      "text_char_accuracy": {
+        "description": 1.0
+      },
+      "header_field_accuracy": 0.95,
+      "exact_match_docs": 0.5,
+      "reconcile_rate": 1.0,
+      "per_field_accuracy": {
+        "balance": 1.0,
+        "credit": 1.0,
+        "date": 1.0,
+        "debit": 1.0,
+        "description": 1.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 0.5,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {
+          "account_holder": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "account_number": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "balance": {
+            "threshold": 0.9,
+            "n": 68,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "bank_name": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "branch": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "closing_balance": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "credit": {
+            "threshold": 0.9,
+            "n": 14,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "currency": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "date": {
+            "threshold": 0.9,
+            "n": 68,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "debit": {
+            "threshold": 0.9,
+            "n": 54,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "description": {
+            "threshold": 0.8,
+            "n": 68,
+            "flag_rate": 0.5441,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "ifsc": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "opening_balance": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_end": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_start": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          }
+        },
+        "fields_compared": 291,
+        "fields_flagged": 41,
+        "flag_rate": 0.1409,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": 0.0
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": 1.0,
+        "per_field_accuracy": {
+          "balance": 1.0,
+          "credit": 1.0,
+          "date": 1.0,
+          "debit": 1.0,
+          "description": 1.0
+        }
+      }
+    },
+    "modern_zebra": {
+      "docs": 2,
+      "failed_docs": 0,
+      "rows_truth": 71,
+      "rows_extracted": 51,
+      "row_recall": 0.7042,
+      "row_precision": 0.9804,
+      "row_field_accuracy": 0.5577,
+      "financial_field_accuracy": 0.5915,
+      "text_char_accuracy": {
+        "description": 0.426
+      },
+      "header_field_accuracy": 1.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.5352,
+        "credit": 0.7042,
+        "date": 0.4225,
+        "debit": 0.7042,
+        "description": 0.4225
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 1.0,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 1.0,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {
+          "account_holder": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "account_number": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "balance": {
+            "threshold": 0.9,
+            "n": 50,
+            "flag_rate": 0.24,
+            "wrong": 12,
+            "wrong_caught": 12
+          },
+          "bank_name": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "branch": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "closing_balance": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "credit": {
+            "threshold": 0.9,
+            "n": 16,
+            "flag_rate": 0.1875,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "currency": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "date": {
+            "threshold": 0.9,
+            "n": 48,
+            "flag_rate": 0.375,
+            "wrong": 18,
+            "wrong_caught": 18
+          },
+          "debit": {
+            "threshold": 0.9,
+            "n": 34,
+            "flag_rate": 0.2059,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "description": {
+            "threshold": 0.8,
+            "n": 30,
+            "flag_rate": 0.6,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "ifsc": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "opening_balance": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_end": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_start": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          }
+        },
+        "fields_compared": 198,
+        "fields_flagged": 59,
+        "flag_rate": 0.298,
+        "wrong_fields": 30,
+        "wrong_caught_by_flags": 30,
+        "error_recall": 1.0,
+        "flag_precision": 0.5085
+      },
+      "suggestions": {
+        "total": 13,
+        "correct": 12,
+        "precision": 0.9231,
+        "verified_total": 10,
+        "verified_precision": 0.9,
+        "unverified_precision": 1.0,
+        "fixes_errors": 12,
+        "breaks_correct": 1
+      },
+      "after_suggestions": {
+        "row_field_accuracy": 0.5887,
+        "per_field_accuracy": {
+          "balance": 0.7042,
+          "credit": 0.7042,
+          "date": 0.4225,
+          "debit": 0.6901,
+          "description": 0.4225
+        }
+      }
+    },
+    "wrapped_two_date": {
+      "docs": 2,
+      "failed_docs": 0,
+      "rows_truth": 80,
+      "rows_extracted": 115,
+      "row_recall": 1.0,
+      "row_precision": 0.6957,
+      "row_field_accuracy": 0.8232,
+      "financial_field_accuracy": 0.7719,
+      "text_char_accuracy": {
+        "description": 0.8988,
+        "ref": 0.8231
+      },
+      "header_field_accuracy": 0.9,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.575,
+        "credit": 0.9,
+        "date": 0.9375,
+        "debit": 0.675,
+        "description": 0.875,
+        "ref": 0.8625,
+        "value_date": 0.9375
+      },
+      "per_header_accuracy": {
+        "account_holder": 1.0,
+        "account_number": 1.0,
+        "bank_name": 1.0,
+        "branch": 1.0,
+        "closing_balance": 0.5,
+        "currency": 1.0,
+        "ifsc": 1.0,
+        "opening_balance": 0.5,
+        "period_end": 1.0,
+        "period_start": 1.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {
+          "account_holder": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "account_number": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "balance": {
+            "threshold": 0.9,
+            "n": 46,
+            "flag_rate": 0.0652,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "bank_name": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "branch": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "closing_balance": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "credit": {
+            "threshold": 0.9,
+            "n": 15,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "currency": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "date": {
+            "threshold": 0.9,
+            "n": 75,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "debit": {
+            "threshold": 0.9,
+            "n": 31,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "description": {
+            "threshold": 0.8,
+            "n": 73,
+            "flag_rate": 0.5205,
+            "wrong": 3,
+            "wrong_caught": 1
+          },
+          "ifsc": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.5,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "opening_balance": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_end": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_start": {
+            "threshold": 0.9,
+            "n": 2,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "ref": {
+            "threshold": 0.9,
+            "n": 50,
+            "flag_rate": 0.02,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "value_date": {
+            "threshold": 0.9,
+            "n": 75,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          }
+        },
+        "fields_compared": 383,
+        "fields_flagged": 45,
+        "flag_rate": 0.1175,
+        "wrong_fields": 3,
+        "wrong_caught_by_flags": 1,
+        "error_recall": 0.3333,
+        "flag_precision": 0.0222
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": 0.8232,
+        "per_field_accuracy": {
+          "balance": 0.575,
+          "credit": 0.9,
+          "date": 0.9375,
+          "debit": 0.675,
+          "description": 0.875,
+          "ref": 0.8625,
+          "value_date": 0.9375
+        }
+      }
+    }
+  },
+  "errors": [
+    {
+      "doc": "classic_grid_00",
+      "row": 0,
+      "field": "description",
+      "truth": "NEFT-N724238849696532-ORBITAL SOFTWARE PVT LTD-SALARY",
+      "got": "NEFT-N724238849696532-ORBITAL SOFTWARE PVT LTD-SALARY |"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 0,
+      "field": "ref",
+      "truth": "N724238849696532",
+      "got": "N724238849696534"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 6,
+      "field": "description",
+      "truth": "UPI/171822782489/IRCTC",
+      "got": "ib UPI/171822782489/IRCTC"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 13,
+      "field": "description",
+      "truth": "ATM WDL 132677 KISHANGANJ",
+      "got": "ATM WDL 132677 KISHANGANJ |"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 28,
+      "field": "balance",
+      "truth": "105483.05",
+      "got": "1105483.05"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 35,
+      "field": "ref",
+      "truth": "None",
+      "got": "aa"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 40,
+      "field": "ref",
+      "truth": "None",
+      "got": "|"
+    },
+    {
+      "doc": "classic_grid_00",
+      "row": 41,
+      "field": "description",
+      "truth": "UPI/053100330923/HARRISON RAI",
+      "got": "UPI/053100330923/HARRISON RAI |"
+    },
+    {
+      "doc": "classic_grid_03",
+      "row": 6,
+      "field": "description",
+      "truth": "IMPS/688069079039/VEDA APTE",
+      "got": "if IMPS/688069079039/VEDA APTE"
+    },
+    {
+      "doc": "classic_grid_03",
+      "row": 23,
+      "field": "description",
+      "truth": "POS BOOKMYSHOW BULANDSHAHR",
+      "got": "POS BOOKMYSHOW BULANDSHAHR:"
+    },
+    {
+      "doc": "classic_grid_03",
+      "row": 26,
+      "field": "ref",
+      "truth": "343220274789",
+      "got": "3432202747891"
+    },
+    {
+      "doc": "classic_grid_03",
+      "row": 29,
+      "field": "ref",
+      "truth": "None",
+      "got": "|"
+    },
+    {
+      "doc": "drcr_single_amount_03",
+      "row": null,
+      "field": "account_number",
+      "truth": "811095294033229",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 1,
+      "field": "balance",
+      "truth": "128292.03",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 2,
+      "field": "balance",
+      "truth": "127527.23",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 3,
+      "field": "balance",
+      "truth": "121222.89",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 5,
+      "field": "balance",
+      "truth": "114889.52",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 7,
+      "field": "balance",
+      "truth": "113005.92",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 10,
+      "field": "balance",
+      "truth": "94236.47",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 11,
+      "field": "balance",
+      "truth": "93236.47",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 13,
+      "field": "balance",
+      "truth": "80963.51",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 15,
+      "field": "balance",
+      "truth": "76098.54",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 17,
+      "field": "balance",
+      "truth": "66848.54",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 21,
+      "field": "balance",
+      "truth": "56580.91",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 25,
+      "field": "balance",
+      "truth": "213309.85",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 27,
+      "field": "date",
+      "truth": "2025-08-30",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 27,
+      "field": "description",
+      "truth": "UPI/039484955274/OWEN NAYAR",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 0,
+      "field": "date",
+      "truth": "2025-02-01",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 0,
+      "field": "description",
+      "truth": "IMPS/793535393729/PUSHTI SHAH",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 2,
+      "field": "date",
+      "truth": "2025-02-01",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 2,
+      "field": "description",
+      "truth": "UPI/408096780443/BIGBASKET",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 3,
+      "field": "date",
+      "truth": "2025-02-02",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 3,
+      "field": "description",
+      "truth": "NEFT-N209702795926762-HELIX SYSTEMS INDIA-SALARY",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 5,
+      "field": "date",
+      "truth": "2025-02-04",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 5,
+      "field": "description",
+      "truth": "UPI/807310036294/APOLLO PHARMACY",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 6,
+      "field": "date",
+      "truth": "2025-02-05",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 6,
+      "field": "description",
+      "truth": "NEFT-N633552139297201-WARHI GANDHI",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 8,
+      "field": "date",
+      "truth": "2025-02-07",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 8,
+      "field": "description",
+      "truth": "IMPS/519844323997/AARNAV NAIR",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 9,
+      "field": "date",
+      "truth": "2025-02-08",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 9,
+      "field": "description",
+      "truth": "UPI/336657101086/INAYA KRISH",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_03",
+      "row": 11,
+      "field": "date",
+      "truth": "2025-02-10",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 0,
+      "field": "description",
+      "truth": "UPI/594255365518/AIRTEL PAYMENTS",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 0,
+      "field": "ref",
+      "truth": "594255365518",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 0,
+      "field": "debit",
+      "truth": "6031.93",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 0,
+      "field": "balance",
+      "truth": "58308.35",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 1,
+      "field": "ref",
+      "truth": "635900921963",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 1,
+      "field": "debit",
+      "truth": "6030.00",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 1,
+      "field": "balance",
+      "truth": "52278.35",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "row": 2,
+      "field": "date",
+      "truth": "2026-04-02",
+      "got": "None"
+    }
+  ],
+  "failures": []
+}

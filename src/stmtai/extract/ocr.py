@@ -70,10 +70,57 @@ class RapidOCRBackend:
         return segments
 
 
+# --------------------------------------------------------------------------- Tesseract
+class TesseractBackend:
+    """Tesseract 5 through pytesseract: word-level boxes, needs the ``tesseract`` binary on PATH."""
+
+    name = "tesseract"
+
+    def __init__(self, psm: int = 4) -> None:
+        try:
+            import pytesseract  # type: ignore
+
+            pytesseract.get_tesseract_version()
+        except Exception as exc:  # pragma: no cover - depends on the environment
+            raise OCRUnavailableError(
+                "Tesseract is not available. Install the binary (https://github.com/UB-Mannheim/tesseract/wiki) "
+                "and run: pip install pytesseract"
+            ) from exc
+        self._pt = pytesseract
+        self._config = f"--psm {psm}"
+
+    def read(self, image: np.ndarray) -> list[Segment]:
+        d = self._pt.image_to_data(image, config=self._config, output_type=self._pt.Output.DICT)
+        segments: list[Segment] = []
+        for text, conf, x, y, w, h in zip(d["text"], d["conf"], d["left"], d["top"], d["width"], d["height"]):
+            text = str(text).strip()
+            if not text or float(conf) < 0:
+                continue
+            segments.append(([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], text, float(conf) / 100.0))
+        return segments
+
+
+class CachedOnlyBackend:
+    """Replays results produced elsewhere (for example a GPU notebook). Never runs an engine."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def read(self, image: np.ndarray) -> list[Segment]:
+        raise OCRUnavailableError(
+            f"no cached OCR result for engine '{self.name}'. Run that engine first (see notebooks/) and copy its "
+            "JSON files into data/ocr_cache."
+        )
+
+
 def get_backend(name: str = "rapidocr") -> OCRBackend:
     if name == "rapidocr":
         return RapidOCRBackend()
-    raise ValueError(f"unknown OCR backend: {name}")
+    if name == "tesseract":
+        return TesseractBackend()
+    if name.startswith("cached:"):
+        return CachedOnlyBackend(name.split(":", 1)[1])
+    raise ValueError(f"unknown OCR backend: {name} (rapidocr, tesseract, cached:<engine>)")
 
 
 # --------------------------------------------------------------------------- cache

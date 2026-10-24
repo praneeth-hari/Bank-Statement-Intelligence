@@ -1,0 +1,916 @@
+{
+  "overall": {
+    "docs": 12,
+    "failed_docs": 10,
+    "rows_truth": 696,
+    "rows_extracted": 96,
+    "row_recall": 0.1121,
+    "row_precision": 0.8125,
+    "row_field_accuracy": 0.0901,
+    "financial_field_accuracy": 0.0866,
+    "text_char_accuracy": {
+      "description": 0.4604,
+      "ref": 0.4793
+    },
+    "header_field_accuracy": 0.1417,
+    "exact_match_docs": 0.0,
+    "reconcile_rate": 0.0,
+    "per_field_accuracy": {
+      "balance": 0.0977,
+      "credit": 0.1063,
+      "date": 0.0733,
+      "debit": 0.069,
+      "description": 0.0503,
+      "ref": 0.1034,
+      "value_date": 0.2753
+    },
+    "per_header_accuracy": {
+      "account_holder": 0.0833,
+      "account_number": 0.0833,
+      "bank_name": 0.1667,
+      "branch": 0.1667,
+      "closing_balance": 0.1667,
+      "currency": 0.1667,
+      "ifsc": 0.1667,
+      "opening_balance": 0.0833,
+      "period_end": 0.1667,
+      "period_start": 0.1667
+    },
+    "review": {
+      "threshold": 0.9,
+      "field_thresholds": {
+        "description": 0.8
+      },
+      "by_field": {
+        "account_holder": {
+          "threshold": 0.9,
+          "n": 1,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "account_number": {
+          "threshold": 0.9,
+          "n": 1,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "balance": {
+          "threshold": 0.9,
+          "n": 78,
+          "flag_rate": 0.1154,
+          "wrong": 10,
+          "wrong_caught": 2
+        },
+        "bank_name": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "branch": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 1.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "closing_balance": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "credit": {
+          "threshold": 0.9,
+          "n": 36,
+          "flag_rate": 0.4167,
+          "wrong": 3,
+          "wrong_caught": 2
+        },
+        "currency": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "date": {
+          "threshold": 0.9,
+          "n": 69,
+          "flag_rate": 0.1159,
+          "wrong": 18,
+          "wrong_caught": 7
+        },
+        "debit": {
+          "threshold": 0.9,
+          "n": 47,
+          "flag_rate": 0.5532,
+          "wrong": 23,
+          "wrong_caught": 23
+        },
+        "description": {
+          "threshold": 0.8,
+          "n": 55,
+          "flag_rate": 0.6909,
+          "wrong": 20,
+          "wrong_caught": 18
+        },
+        "ifsc": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 0.5,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "opening_balance": {
+          "threshold": 0.9,
+          "n": 1,
+          "flag_rate": 0.0,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "period_end": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 0.5,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "period_start": {
+          "threshold": 0.9,
+          "n": 2,
+          "flag_rate": 0.5,
+          "wrong": 0,
+          "wrong_caught": 0
+        },
+        "ref": {
+          "threshold": 0.9,
+          "n": 33,
+          "flag_rate": 0.1515,
+          "wrong": 12,
+          "wrong_caught": 3
+        },
+        "value_date": {
+          "threshold": 0.9,
+          "n": 58,
+          "flag_rate": 0.0172,
+          "wrong": 9,
+          "wrong_caught": 0
+        }
+      },
+      "fields_compared": 393,
+      "fields_flagged": 107,
+      "flag_rate": 0.2723,
+      "wrong_fields": 95,
+      "wrong_caught_by_flags": 55,
+      "error_recall": 0.5789,
+      "flag_precision": 0.514
+    },
+    "suggestions": {
+      "total": 28,
+      "correct": 15,
+      "precision": 0.5357,
+      "verified_total": 10,
+      "verified_precision": 0.6,
+      "unverified_precision": 0.5,
+      "fixes_errors": 15,
+      "breaks_correct": 5
+    },
+    "after_suggestions": {
+      "row_field_accuracy": 0.6067,
+      "per_field_accuracy": {
+        "balance": 0.7957,
+        "credit": 0.8172,
+        "date": 0.4624,
+        "debit": 0.7419,
+        "description": 0.2903,
+        "ref": 0.4769,
+        "value_date": 0.6308
+      }
+    }
+  },
+  "by_layout": {
+    "classic_grid": {
+      "docs": 3,
+      "failed_docs": 3,
+      "rows_truth": 170,
+      "rows_extracted": 0,
+      "row_recall": 0.0,
+      "row_precision": null,
+      "row_field_accuracy": 0.0,
+      "financial_field_accuracy": 0.0,
+      "text_char_accuracy": {},
+      "header_field_accuracy": 0.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0,
+        "credit": 0.0,
+        "date": 0.0,
+        "debit": 0.0,
+        "description": 0.0,
+        "ref": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.0,
+        "branch": 0.0,
+        "closing_balance": 0.0,
+        "currency": 0.0,
+        "ifsc": 0.0,
+        "opening_balance": 0.0,
+        "period_end": 0.0,
+        "period_start": 0.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {},
+        "fields_compared": 0,
+        "fields_flagged": 0,
+        "flag_rate": null,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": null,
+        "per_field_accuracy": {}
+      }
+    },
+    "drcr_single_amount": {
+      "docs": 3,
+      "failed_docs": 3,
+      "rows_truth": 179,
+      "rows_extracted": 0,
+      "row_recall": 0.0,
+      "row_precision": null,
+      "row_field_accuracy": 0.0,
+      "financial_field_accuracy": 0.0,
+      "text_char_accuracy": {},
+      "header_field_accuracy": 0.0,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0,
+        "credit": 0.0,
+        "date": 0.0,
+        "debit": 0.0,
+        "description": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.0,
+        "branch": 0.0,
+        "closing_balance": 0.0,
+        "currency": 0.0,
+        "ifsc": 0.0,
+        "opening_balance": 0.0,
+        "period_end": 0.0,
+        "period_start": 0.0
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {},
+        "fields_compared": 0,
+        "fields_flagged": 0,
+        "flag_rate": null,
+        "wrong_fields": 0,
+        "wrong_caught_by_flags": 0,
+        "error_recall": null,
+        "flag_precision": null
+      },
+      "suggestions": {
+        "total": 0,
+        "correct": 0,
+        "precision": null,
+        "verified_total": 0,
+        "verified_precision": null,
+        "unverified_precision": null,
+        "fixes_errors": 0,
+        "breaks_correct": 0
+      },
+      "after_suggestions": {
+        "row_field_accuracy": null,
+        "per_field_accuracy": {}
+      }
+    },
+    "modern_zebra": {
+      "docs": 3,
+      "failed_docs": 2,
+      "rows_truth": 169,
+      "rows_extracted": 30,
+      "row_recall": 0.0947,
+      "row_precision": 0.5333,
+      "row_field_accuracy": 0.045,
+      "financial_field_accuracy": 0.0562,
+      "text_char_accuracy": {
+        "description": 0.0
+      },
+      "header_field_accuracy": 0.3333,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.0947,
+        "credit": 0.0888,
+        "date": 0.0,
+        "debit": 0.0414,
+        "description": 0.0
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.3333,
+        "account_number": 0.3333,
+        "bank_name": 0.3333,
+        "branch": 0.3333,
+        "closing_balance": 0.3333,
+        "currency": 0.3333,
+        "ifsc": 0.3333,
+        "opening_balance": 0.3333,
+        "period_end": 0.3333,
+        "period_start": 0.3333
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {
+          "account_holder": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "account_number": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "balance": {
+            "threshold": 0.9,
+            "n": 16,
+            "flag_rate": 0.1875,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "bank_name": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "branch": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "closing_balance": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "credit": {
+            "threshold": 0.9,
+            "n": 10,
+            "flag_rate": 0.5,
+            "wrong": 1,
+            "wrong_caught": 1
+          },
+          "currency": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "date": {
+            "threshold": 0.9,
+            "n": 7,
+            "flag_rate": 1.0,
+            "wrong": 7,
+            "wrong_caught": 7
+          },
+          "debit": {
+            "threshold": 0.9,
+            "n": 7,
+            "flag_rate": 1.0,
+            "wrong": 5,
+            "wrong_caught": 5
+          },
+          "ifsc": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "opening_balance": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_end": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_start": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          }
+        },
+        "fields_compared": 50,
+        "fields_flagged": 25,
+        "flag_rate": 0.5,
+        "wrong_fields": 13,
+        "wrong_caught_by_flags": 13,
+        "error_recall": 1.0,
+        "flag_precision": 0.52
+      },
+      "suggestions": {
+        "total": 6,
+        "correct": 3,
+        "precision": 0.5,
+        "verified_total": 3,
+        "verified_precision": 0.6667,
+        "unverified_precision": 0.3333,
+        "fixes_errors": 3,
+        "breaks_correct": 1
+      },
+      "after_suggestions": {
+        "row_field_accuracy": 0.2786,
+        "per_field_accuracy": {
+          "balance": 0.5357,
+          "credit": 0.5357,
+          "date": 0.0,
+          "debit": 0.3214,
+          "description": 0.0
+        }
+      }
+    },
+    "wrapped_two_date": {
+      "docs": 3,
+      "failed_docs": 2,
+      "rows_truth": 178,
+      "rows_extracted": 66,
+      "row_recall": 0.3483,
+      "row_precision": 0.9394,
+      "row_field_accuracy": 0.2592,
+      "financial_field_accuracy": 0.2851,
+      "text_char_accuracy": {
+        "description": 0.6618,
+        "ref": 0.4793
+      },
+      "header_field_accuracy": 0.2333,
+      "exact_match_docs": 0.0,
+      "reconcile_rate": 0.0,
+      "per_field_accuracy": {
+        "balance": 0.2921,
+        "credit": 0.3315,
+        "date": 0.2865,
+        "debit": 0.2303,
+        "description": 0.1966,
+        "ref": 0.2022,
+        "value_date": 0.2753
+      },
+      "per_header_accuracy": {
+        "account_holder": 0.0,
+        "account_number": 0.0,
+        "bank_name": 0.3333,
+        "branch": 0.3333,
+        "closing_balance": 0.3333,
+        "currency": 0.3333,
+        "ifsc": 0.3333,
+        "opening_balance": 0.0,
+        "period_end": 0.3333,
+        "period_start": 0.3333
+      },
+      "review": {
+        "threshold": 0.9,
+        "field_thresholds": {
+          "description": 0.8
+        },
+        "by_field": {
+          "balance": {
+            "threshold": 0.9,
+            "n": 62,
+            "flag_rate": 0.0968,
+            "wrong": 10,
+            "wrong_caught": 2
+          },
+          "bank_name": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "branch": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "closing_balance": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "credit": {
+            "threshold": 0.9,
+            "n": 26,
+            "flag_rate": 0.3846,
+            "wrong": 2,
+            "wrong_caught": 1
+          },
+          "currency": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "date": {
+            "threshold": 0.9,
+            "n": 62,
+            "flag_rate": 0.0161,
+            "wrong": 11,
+            "wrong_caught": 0
+          },
+          "debit": {
+            "threshold": 0.9,
+            "n": 40,
+            "flag_rate": 0.475,
+            "wrong": 18,
+            "wrong_caught": 18
+          },
+          "description": {
+            "threshold": 0.8,
+            "n": 55,
+            "flag_rate": 0.6909,
+            "wrong": 20,
+            "wrong_caught": 18
+          },
+          "ifsc": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 1.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_end": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "period_start": {
+            "threshold": 0.9,
+            "n": 1,
+            "flag_rate": 0.0,
+            "wrong": 0,
+            "wrong_caught": 0
+          },
+          "ref": {
+            "threshold": 0.9,
+            "n": 33,
+            "flag_rate": 0.1515,
+            "wrong": 12,
+            "wrong_caught": 3
+          },
+          "value_date": {
+            "threshold": 0.9,
+            "n": 58,
+            "flag_rate": 0.0172,
+            "wrong": 9,
+            "wrong_caught": 0
+          }
+        },
+        "fields_compared": 343,
+        "fields_flagged": 82,
+        "flag_rate": 0.2391,
+        "wrong_fields": 82,
+        "wrong_caught_by_flags": 42,
+        "error_recall": 0.5122,
+        "flag_precision": 0.5122
+      },
+      "suggestions": {
+        "total": 22,
+        "correct": 12,
+        "precision": 0.5455,
+        "verified_total": 7,
+        "verified_precision": 0.5714,
+        "unverified_precision": 0.5333,
+        "fixes_errors": 12,
+        "breaks_correct": 4
+      },
+      "after_suggestions": {
+        "row_field_accuracy": 0.7077,
+        "per_field_accuracy": {
+          "balance": 0.9077,
+          "credit": 0.9385,
+          "date": 0.6615,
+          "debit": 0.9231,
+          "description": 0.4154,
+          "ref": 0.4769,
+          "value_date": 0.6308
+        }
+      }
+    }
+  },
+  "errors": [
+    {
+      "doc": "modern_zebra_00",
+      "row": 1,
+      "field": "date",
+      "truth": "2025-08-02",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 1,
+      "field": "description",
+      "truth": "UPI/324563730275/MADHAV PANT",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 5,
+      "field": "date",
+      "truth": "2025-08-07",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 5,
+      "field": "description",
+      "truth": "ATM WDL 920483 KATNI",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 5,
+      "field": "debit",
+      "truth": "1000.00",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 10,
+      "field": "date",
+      "truth": "2025-08-12",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 10,
+      "field": "description",
+      "truth": "UPI/727843111030/IRCTC",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 10,
+      "field": "debit",
+      "truth": "3450.00",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 11,
+      "field": "date",
+      "truth": "2025-08-14",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 11,
+      "field": "description",
+      "truth": "ATM WDL 681900 GUNA",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 11,
+      "field": "debit",
+      "truth": "1000.00",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 14,
+      "field": "date",
+      "truth": "2025-08-16",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 14,
+      "field": "description",
+      "truth": "UPI/276800290153/DHRUV PARMAR",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 14,
+      "field": "debit",
+      "truth": "4042.58",
+      "got": "None"
+    },
+    {
+      "doc": "modern_zebra_00",
+      "row": 16,
+      "field": "date",
+      "truth": "2025-08-20",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 3,
+      "field": "description",
+      "truth": "ATM WDL 167883 RAICHUR",
+      "got": "ATM WOL 167883 RAICHUR"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 4,
+      "field": "ref",
+      "truth": "813050213689",
+      "got": "813050213689."
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 9,
+      "field": "description",
+      "truth": "ATM WDL 369137 AVADI",
+      "got": "ATM WOL 369137 AVADI"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 9,
+      "field": "ref",
+      "truth": "None",
+      "got": "i"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 10,
+      "field": "ref",
+      "truth": "018468280737",
+      "got": "018468280737:"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 18,
+      "field": "debit",
+      "truth": "880.00",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 18,
+      "field": "balance",
+      "truth": "69548.52",
+      "got": "70428.52"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 19,
+      "field": "debit",
+      "truth": "6987.88",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 19,
+      "field": "balance",
+      "truth": "62560.64",
+      "got": "69548.52"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 20,
+      "field": "debit",
+      "truth": "950.00",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 20,
+      "field": "balance",
+      "truth": "61610.64",
+      "got": "62560.64"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 21,
+      "field": "debit",
+      "truth": "2883.59",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 21,
+      "field": "balance",
+      "truth": "58727.05",
+      "got": "61610.64"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 22,
+      "field": "debit",
+      "truth": "8497.60",
+      "got": "None"
+    },
+    {
+      "doc": "wrapped_two_date_01",
+      "row": 22,
+      "field": "balance",
+      "truth": "50229.45",
+      "got": "58727.05"
+    }
+  ],
+  "failures": [
+    {
+      "doc": "classic_grid_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of classic_grid_00__scan_medium.pdf"
+    },
+    {
+      "doc": "classic_grid_01",
+      "error": "ExtractionError: no transaction table header found on page 1 of classic_grid_01__scan_medium.pdf"
+    },
+    {
+      "doc": "classic_grid_04",
+      "error": "ExtractionError: no transaction table header found on page 1 of classic_grid_04__scan_medium.pdf"
+    },
+    {
+      "doc": "drcr_single_amount_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of drcr_single_amount_00__scan_medium.pdf"
+    },
+    {
+      "doc": "drcr_single_amount_01",
+      "error": "ExtractionError: no transaction table header found on page 1 of drcr_single_amount_01__scan_medium.pdf"
+    },
+    {
+      "doc": "drcr_single_amount_04",
+      "error": "ExtractionError: no transaction table header found on page 1 of drcr_single_amount_04__scan_medium.pdf"
+    },
+    {
+      "doc": "modern_zebra_01",
+      "error": "ExtractionError: no transaction table header found on page 1 of modern_zebra_01__scan_medium.pdf"
+    },
+    {
+      "doc": "modern_zebra_04",
+      "error": "ExtractionError: no transaction table header found on page 1 of modern_zebra_04__scan_medium.pdf"
+    },
+    {
+      "doc": "wrapped_two_date_00",
+      "error": "ExtractionError: no transaction table header found on page 1 of wrapped_two_date_00__scan_medium.pdf"
+    },
+    {
+      "doc": "wrapped_two_date_04",
+      "error": "ExtractionError: no transaction table header found on page 1 of wrapped_two_date_04__scan_medium.pdf"
+    }
+  ]
+}

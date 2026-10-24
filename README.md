@@ -88,6 +88,36 @@ threshold can catch. A small lexicon of Indian payment-rail prefixes (UPI, IMPS)
 10-13 digit reference follows, restores them, and the digits are cross-checked against the reference
 column. Every such repair is flagged `prefix_snapped`.
 
+## OCR engine benchmark (step 4)
+
+Two questions, kept separate: *how well does an engine read the digits* (engine-independent, scored on its
+text output against ground truth) and *how well does the whole pipeline do with it* (needs word boxes).
+`python -m stmtai.benchmark export --engine tesseract` then `python -m stmtai.benchmark score`.
+
+| Engine | Scan | Amount recall | Amount precision | Date recall | Reference recall |
+|---|---|---|---|---|---|
+| RapidOCR (PP-OCRv3) | light | 100.0% | 95.1% | 100.0% | 100.0% |
+| | medium | 98.6% | 96.1% | 98.4% | 99.8% |
+| | heavy | 13.5% | 51.3% | 16.8% | 18.2% |
+| Tesseract 5 (`--psm 4`) | light | 99.8% | 95.0% | 75.7% | 99.1% |
+| | medium | 71.0% | 89.1% | 49.1% | 66.8% |
+| | heavy | 2.8% | 14.9% | 5.5% | 0.1% |
+| Tesseract + flatten + denoise | medium | 73.5% | 91.8% | 50.9% | 68.3% |
+| | heavy | 5.7% | 18.9% | 6.4% | 0.8% |
+
+Amount recall compares digits only, so it is lenient about separators on purpose: it isolates digit reading.
+
+- RapidOCR is clearly the better engine here, and no engine reads the **heavy** scans. That severity is
+  probably beyond any classical OCR and is the case for the LLM fallback in step 7.
+- Tesseract's first run used `--psm 6` and read 70% of amounts on light scans; `--psm 4` reads 99.8%. Page
+  segmentation mode alone moved it by 30 points, so engine comparisons are only as fair as their settings.
+- Full pipeline with Tesseract (light / medium / heavy): financial-field accuracy 83.7% / 8.7% / 0.0%
+  against RapidOCR's 100% / 99.6% / 34.9%. The tolerant extractor was developed against RapidOCR's output,
+  so part of that gap is tuning, not just the engine.
+- **Unlimited-OCR** (3B vision-language model) returns block-level text, not word boxes, so it can only be
+  scored with the text benchmark. `notebooks/unlimited_ocr_colab.ipynb` runs it on a free GPU and writes
+  the text files this benchmark reads. **That run has not been done yet**, so it is not in the table.
+
 ## How confidence works
 
 The running balance is the strongest correctness signal a statement has:
@@ -172,7 +202,7 @@ whether that held.
 1. [x] Synthetic statement generator with ground truth
 2. [x] Digital extraction, confidence scoring, evaluation + robustness harness
 3. [x] Scan path: deskew, OCR with confidence, tolerant table reconstruction, calibration
-4. [ ] Benchmark OCR engines against each other on the same labelled scans
+4. [~] Benchmark OCR engines on the same labelled scans (RapidOCR, Tesseract done; Unlimited-OCR notebook ready, not yet run)
 5. [ ] FastAPI service
 6. [ ] React review UI (page image with boxes, editable table, low-confidence cells highlighted)
 7. [ ] LLM fallback for messy rows, natural-language query layer, Docker, demo video
@@ -186,6 +216,7 @@ src/stmtai/
   evaluate.py      row alignment, per-field accuracy, review-loop metrics, report CLI
   robustness.py    injected-error detection harness
   calibrate.py     per-field review threshold sweep on held-out data
+  benchmark.py     engine-independent OCR text benchmark (amount/date/reference recall)
   extract/
     digital.py     table extraction shared by both paths (header band, columns, rows, markers)
     scanned.py     OCR path; ocr.py engine wrapper, deskew, cache; preprocess.py cleanup recipes
@@ -194,7 +225,8 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             125 tests, including negative controls for the evaluator itself
+tests/             132 tests, including negative controls for the evaluator itself
 samples/           a few generated documents
+notebooks/         Colab notebook for GPU-only OCR engines
 reports/           committed output of the evaluation and robustness runs
 ```
