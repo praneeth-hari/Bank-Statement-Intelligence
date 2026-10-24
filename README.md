@@ -422,6 +422,12 @@ local Ollama model for the optional text and question parsers, run Ollama on you
 `STMTAI_LLM=ollama:llama3.1:8b docker compose up` (the container reaches it at `host.docker.internal`). To require an
 API key, set `STMTAI_API_KEY`. Try it with the PDFs in `samples/`.
 
+Checked on Windows with Docker Desktop: the image builds in about 2.5 minutes on a warm machine (about 1.4 GB on disk),
+the container reports healthy within 10 seconds, and inside it a digital sample and a scan both extract and reconcile,
+a statement can be approved, and `/api/query` answers from it. If the first build sits for many minutes with no output,
+Docker Desktop's engine is probably stuck rather than the download being slow: restart Docker Desktop and run the build
+again, and use `docker compose build --progress=plain` to see each step.
+
 **Without Docker:**
 
 ```bash
@@ -482,7 +488,7 @@ whether that held.
 6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
 7. [x] Text and date suggestions: exact rules plus an optional Ollama fallback, both checked against the document, with an evaluation harness. Measured result: the rules help, the 3B text model adds nothing yet (off by default)
 8. [x] Natural-language query layer: rules plus an optional model parser, a validated query run by a plain engine, answers with the rows behind them, evaluated against independently computed answers
-9. [~] Docker: one command starts the API and the UI together (`docker compose up --build`). Demo video still to do
+9. [~] Docker done: `docker compose up --build` starts the API and the UI together, checked on a real Docker Desktop. Demo video still to do
 
 ## Layout of the repo
 
