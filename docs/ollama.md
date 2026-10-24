@@ -25,7 +25,7 @@ Nothing here is required: without it the app works exactly as before.
 python -m stmtai.llm.evaluate --kind scan_medium --limit 12 --out data/runs/llm_medium
 ```
 
-Reads the cached OCR for the scans (or runs RapidOCR on first use), asks the model about the cells the arithmetic
+Add `--no-model` to score only the deterministic rules, which needs no Ollama. Reads the cached OCR for the scans (or runs RapidOCR on first use), asks the model about the cells the arithmetic
 could not settle, and scores the answers against the synthetic ground truth. `report.md` has the table;
 `answers.jsonl` has every raw answer and why it was accepted or blocked.
 

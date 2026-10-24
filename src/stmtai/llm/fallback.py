@@ -24,9 +24,11 @@ from typing import Any, Callable, Optional
 from ..extract.models import ExtractedStatement
 from ..extract.scoring import review_items, score
 from .client import LLMUnavailable
+from .rules import date_head, date_rule, description_rule
 from .validate import check_date, check_description
 
 FLAG = "llm_suggested"
+RULE_FLAG = "rule_suggested"
 TEXT_FIELDS = ("description",)
 DATE_FIELDS = ("date", "value_date")
 
@@ -93,9 +95,55 @@ def candidates(ext: ExtractedStatement) -> list[tuple[int, str]]:
 
 
 def _trace(trace: Optional[list[dict]], row: int, field: str, read: Any, answer: Optional[str],
-           rejected: Optional[str]) -> None:
+           rejected: Optional[str], source: str = "llm") -> None:
     if trace is not None:
-        trace.append({"row": row, "field": field, "read": read, "answer": answer, "rejected": rejected})
+        trace.append({"row": row, "field": field, "read": read, "answer": answer, "rejected": rejected, "source": source})
+
+
+def apply_rules(ext: ExtractedStatement, trace: Optional[list[dict]] = None) -> ExtractedStatement:
+    """Deterministic proposals for the same cells the model would be asked about; see ``stmtai.llm.rules``."""
+    start, end = ext.header_value("period_start"), ext.header_value("period_end")
+    proposed, rejected = 0, Counter()
+    cells = candidates(ext)
+    for row, name in cells:
+        fv = ext.transactions[row].fields[name]
+        if name in TEXT_FIELDS:
+            answer = description_rule(str(fv.value))
+            if answer is None:
+                continue
+            reason = check_description(str(fv.value), answer, lookalikes=True)
+            _trace(trace, row, name, fv.value, answer, reason, "rule")
+            if reason:
+                rejected[reason] += 1
+                continue
+            fv.suggestion = answer
+        else:
+            head = date_head(fv.text)
+            if head is None:
+                continue
+            before, after = _neighbour_dates(ext, row)
+            answer = date_rule(fv.text, before, after, start, end)
+            if answer is None:
+                continue
+            d, reason = check_date(head, answer, before, after, start, end)
+            _trace(trace, row, name, fv.text, answer, reason, "rule")
+            if reason:
+                rejected[reason] += 1
+                continue
+            fv.suggestion = d
+        if RULE_FLAG not in fv.flags:
+            fv.flags.append(RULE_FLAG)
+        proposed += 1
+    ext.meta["rules"] = {"asked": len(cells), "proposed": proposed, "rejected": dict(rejected)}
+    return ext
+
+
+def suggest(ext: ExtractedStatement, client=None, **kwargs) -> ExtractedStatement:
+    """Rules first, then the model for whatever the rules left alone. ``client=None`` runs the rules only."""
+    apply_rules(ext, trace=kwargs.get("trace"))
+    if client is not None:
+        llm_fallback(ext, client, **kwargs)
+    return ext
 
 
 def _batches(items: list, size: int):

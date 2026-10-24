@@ -30,7 +30,13 @@ def digit_string(text: str) -> str:
     return "".join(ch for ch in text if ch.isdigit())
 
 
-def check_description(read: str, proposed: Optional[str]) -> Optional[str]:
+def long_digit_runs(text: str) -> list[str]:
+    return re.findall(r"\d{10,}", text)
+
+
+def check_description(read: str, proposed: Optional[str], lookalikes: bool = False) -> Optional[str]:
+    """``lookalikes=True`` is for the rules, which may turn a 0 inside a word back into the letter O: only the
+    reference number (a run of 10+ digits) must then be unchanged, instead of every digit."""
     if proposed is None or not proposed.strip():
         return "empty"
     if "\n" in proposed or len(proposed) > MAX_DESCRIPTION_CHARS:
@@ -40,7 +46,7 @@ def check_description(read: str, proposed: Optional[str]) -> Optional[str]:
     a, b = squash(read), squash(proposed)
     if a == b:
         return "no_change"  # same text; at most spacing or case differs, which a reviewer cannot act on
-    if digit_string(read) != digit_string(proposed):
+    if (long_digit_runs(read) != long_digit_runs(proposed)) if lookalikes else (digit_string(read) != digit_string(proposed)):
         return "changed_digits"  # amounts of money and reference numbers are never the model's to change
     for prefix in RAIL_PREFIXES:
         if read.upper().startswith(prefix) and not proposed.upper().startswith(prefix):

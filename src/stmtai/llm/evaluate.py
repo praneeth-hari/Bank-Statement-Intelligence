@@ -25,20 +25,21 @@ from ..evaluate import align, char_errors, values_equal
 from ..extract.pipeline import extract_pdf
 from ..schema import Label
 from .client import LLMUnavailable, OllamaClient
-from .fallback import FLAG, candidates, llm_fallback
+from .fallback import FLAG, RULE_FLAG, candidates, suggest
 
 
 def _new() -> dict[str, int]:
     return defaultdict(int)
 
 
-def evaluate_doc(label: Label, ext, client, trace_sink: list[dict], batch_size: int) -> dict[str, Any]:
+def evaluate_doc(label: Label, ext, client: Optional[OllamaClient], trace_sink: list[dict], batch_size: int) -> dict[str, Any]:
+    """``client=None`` scores the rules alone."""
     truth = label.statement.transactions
     pairs = {j: i for i, j in align(truth, ext.transactions) if i is not None and j is not None}
     asked = candidates(ext)
     after = ext.model_copy(deep=True)
     trace: list[dict] = []
-    llm_fallback(after, client, batch_size=batch_size, max_cells=10_000, trace=trace)
+    suggest(after, client, batch_size=batch_size, max_cells=10_000, trace=trace)
 
     per: dict[str, dict[str, int]] = defaultdict(_new)
     chars = {"read": 0, "after": 0, "length": 0}
@@ -50,7 +51,8 @@ def evaluate_doc(label: Label, ext, client, trace_sink: list[dict], batch_size: 
         want = getattr(truth[i], name)
         fv = after.transactions[row].fields[name]
         read_ok = values_equal(name, want, fv.value)
-        sug = fv.suggestion if FLAG in fv.flags else None
+        source = "rule" if RULE_FLAG in fv.flags else "llm" if FLAG in fv.flags else None
+        sug = fv.suggestion if source else None
         sug_ok = sug is not None and values_equal(name, want, sug)
         c = per[name]
         c["asked"] += 1
@@ -61,6 +63,8 @@ def evaluate_doc(label: Label, ext, client, trace_sink: list[dict], batch_size: 
             c["proposed_right"] += sug_ok
             c["fixed"] += (not read_ok) and sug_ok
             c["broke"] += read_ok and not sug_ok
+            for key, hit in (("proposed", True), ("fixed", (not read_ok) and sug_ok), ("broke", read_ok and not sug_ok)):
+                c[f"{source}_{key}"] += hit
         c["missed"] += (not read_ok) and not sug_ok
         if name == "description":
             e0, n = char_errors(name, want, fv.value)
@@ -70,7 +74,7 @@ def evaluate_doc(label: Label, ext, client, trace_sink: list[dict], batch_size: 
             chars["length"] += n
         # what the model said before the checks
         for t in trace:
-            if t["row"] == row and t["field"] == name and t["answer"] is not None:
+            if t["row"] == row and t["field"] == name and t["answer"] is not None and t.get("source") == "llm":
                 ok = _answer_right(name, want, t["answer"])
                 per[name]["raw_answers"] += 1
                 per[name]["raw_right"] += ok
@@ -105,8 +109,9 @@ def _pct(a: int, b: int) -> str:
     return f"{100 * a / b:.1f}%" if b else "n/a"
 
 
-def render(summary: dict, model: str, kind: str, client: OllamaClient, extra: dict) -> str:
-    out = [f"# LLM fallback on {kind} ({summary['docs']} documents), model `{model}`", ""]
+def render(summary: dict, model: str, kind: str, client: Optional[OllamaClient], extra: dict) -> str:
+    out = [f"# Text and date suggestions on {kind} ({summary['docs']} documents), "
+           + (f"rules plus model `{model}`" if client is not None else "rules only"), ""]
     f = summary["fields"]
     fixed = sum(c.get("fixed", 0) for c in f.values())
     broke = sum(c.get("broke", 0) for c in f.values())
@@ -122,17 +127,26 @@ def render(summary: dict, model: str, kind: str, client: OllamaClient, extra: di
     if ch["length"]:
         out += ["", f"Description character errors on the cells asked: {ch['read']} before, {ch['after']} after "
                     f"({_pct(ch['read'], ch['length'])} to {_pct(ch['after'], ch['length'])} of characters)."]
-    out += ["", "## What the checks did", "",
+    out += ["", "## Rules versus the model", "",
+            "| field | rule proposals | rule fixed | rule broke | model proposals | model fixed | model broke |",
+            "|---|---|---|---|---|---|---|"]
+    for name, c in sorted(f.items()):
+        out.append(f"| {name} | {c.get('rule_proposed', 0)} | {c.get('rule_fixed', 0)} | {c.get('rule_broke', 0)} | "
+                   f"{c.get('llm_proposed', 0)} | {c.get('llm_fixed', 0)} | {c.get('llm_broke', 0)} |")
+    out += ["", "## What the checks did to the model's answers", "",
             "| field | raw answers | raw answers right | blocked by checks | blocked that were right | blocked that would have broken a correct cell |",
             "|---|---|---|---|---|---|"]
     for name, c in sorted(f.items()):
         out.append(f"| {name} | {c.get('raw_answers', 0)} | {_pct(c.get('raw_right', 0), c.get('raw_answers', 0))} | "
                    f"{c.get('blocked', 0)} | {c.get('blocked_right', 0)} | {c.get('blocked_would_have_broken', 0)} |")
-    secs = client.seconds
-    out += ["", "## Cost", "",
-            f"{client.calls} model calls, {secs:.0f}s total"
-            + (f", {secs / client.calls:.1f}s per call" if client.calls else "")
-            + f"; {client.cache_hits} answered from the cache. {extra.get('docs_failed', 0)} documents failed to extract."]
+    if client is not None:
+        secs = client.seconds
+        out += ["", "## Cost", "",
+                f"{client.calls} model calls, {secs:.0f}s total"
+                + (f", {secs / client.calls:.1f}s per call" if client.calls else "")
+                + f"; {client.cache_hits} answered from the cache. {extra.get('docs_failed', 0)} documents failed to extract."]
+    else:
+        out += ["", f"{extra.get('docs_failed', 0)} documents failed to extract."]
     return "\n".join(out)
 
 
@@ -146,6 +160,7 @@ def main() -> None:
     p.add_argument("--batch", type=int, default=6)
     p.add_argument("--engine", default="rapidocr", help="OCR engine for the extraction (rapidocr, cached:<engine>)")
     p.add_argument("--cache", type=Path, default=Path("data/llm_cache"), help="stores model replies; delete to re-ask")
+    p.add_argument("--no-model", action="store_true", help="score the rules alone; Ollama is not needed")
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args()
 
@@ -154,8 +169,10 @@ def main() -> None:
         kwargs["model"] = args.model
     if args.host:
         kwargs["host"] = args.host
-    client = OllamaClient(**kwargs)
-    client.check()  # fail early with a clear message rather than after an hour of OCR
+    client: Optional[OllamaClient] = None
+    if not args.no_model:
+        client = OllamaClient(**kwargs)
+        client.check()  # fail early with a clear message rather than after an hour of OCR
 
     from ..extract.ocr import get_backend
 
@@ -182,12 +199,12 @@ def main() -> None:
     if not docs:
         raise SystemExit(f"no documents of kind '{args.kind}' evaluated in {args.data}")
     summary = summarize(docs)
-    report = render(summary, client.model, args.kind, client, {"docs_failed": failed})
+    report = render(summary, client.model if client else "", args.kind, client, {"docs_failed": failed})
     print("\n" + report)
     if args.out:
         args.out.mkdir(parents=True, exist_ok=True)
         (args.out / "report.md").write_text(report, encoding="utf-8")
-        (args.out / "metrics.json").write_text(json.dumps({"model": client.model, "kind": args.kind, **summary,
+        (args.out / "metrics.json").write_text(json.dumps({"model": client.model if client else None, "kind": args.kind, **summary,
                                                             "documents": docs}, indent=2, default=str), encoding="utf-8")
         (args.out / "answers.jsonl").write_text("\n".join(json.dumps(t, default=str) for t in trace), encoding="utf-8")
         print(f"Wrote report.md, metrics.json and answers.jsonl to {args.out}")

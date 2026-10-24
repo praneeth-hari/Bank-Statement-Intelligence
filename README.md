@@ -201,12 +201,12 @@ backs it up:
 
 | field | the checks |
 |---|---|
-| description | digits identical to what was read, payment prefix kept, at most 3 character edits, not merely a spacing or case change |
+| description | digits identical to what was read (the rules may turn a 0 inside a word back into O; the reference number is never touched), payment prefix kept, at most 3 character edits, not merely a spacing or case change |
 | date | every number visible in the scan is part of the proposed date; it sits between the previous and next transaction dates and inside the statement period; a month written in letters matches |
 | money, references | never asked |
 
 A suggestion never overwrites the value read, is flagged `llm_suggested`, gets its own review group
-(*Suggested by a language model*, never bulk-confirmable), and is logged so `/feedback` reports the **accept
+(*Suggested text corrections*, never bulk-confirmable), and is logged so `/feedback` reports the **accept
 rate of model suggestions separately from arithmetic ones**. If Ollama is down or the model is not pulled,
 the statement is extracted and scored exactly as before and `meta.llm` says why.
 
@@ -227,9 +227,25 @@ reference number when OCR merged `I/` into one character (`UPV160733754330`). A 
 and 20 of the 58 wrong descriptions flagged on the medium scans came from it. It is fixed in plain code,
 with a test, because a model should not be used to paper over a bug.
 
+**First real run, and what it changed.** `qwen2.5:3b` on 12 medium scans: 15 cells asked about, 2 fixed, 0 correct
+cells put at risk, about 11 s per call on a 4 GB GPU. The raw answers (`answers.jsonl`) showed why the gain was
+small. The errors that remain after arithmetic are mostly the letter O read as a zero (`P00JAPUROHIT`,
+`B00KMYSHOW`), a space read as a dot (`RELIANCE.SMART`) and month names that lost a letter (`29-Ju-26`). The
+model left the zeros alone, because the prompt (rightly) forbade changing digits, and fixed the dot and the
+month. All three are exact rules, so **rules now run first** (`stmtai/llm/rules.py`): look-alike digits inside
+a word, dots between letters, a lost `/` separator, and month names resolved by the neighbouring dates. They
+only touch the name part of a payment description, never the reference digits, and leave handles like
+`rahul123` alone. The model is asked only about what the rules cannot settle. Rule proposals are suggestions
+too, flagged `rule_suggested` and checked by the same validators.
+
+`python -m stmtai.llm.evaluate --no-model` scores the rules alone (no Ollama needed); without the flag the
+report splits rule fixes from model fixes, so the model has to earn its place.
+
 Limits, stated plainly: a wrong one-letter edit that keeps the digits and the prefix passes every check, so
-the reviewer is still the safety net and the accept rate is the metric to watch. Real-model results depend on
-the model you pull; they are not claimed here until you run the evaluation.
+the reviewer is still the safety net and the accept rate is the metric to watch. The sample above is small
+(15 cells); treat it as a first reading, not a benchmark. Letters the OCR dropped entirely
+(`WRIDESHVALA`) are beyond both rules and a 3B model reading text alone; reading the pixels again with a vision
+model is the next thing to try.
 
 ## How confidence works
 
@@ -335,7 +351,7 @@ src/stmtai/
   calibrate.py     per-field review threshold sweep on held-out data
   benchmark.py     engine-independent OCR text benchmark (amount/date/reference recall)
   feedback.py      flag quality measured from reviewer corrections
-  llm/             Ollama client, proposal checks, fallback, and its evaluation (python -m stmtai.llm.evaluate)
+  llm/             rules and Ollama client, proposal checks, fallback and its evaluation (python -m stmtai.llm.evaluate)
   api/             FastAPI app, storage and view-building (raw -> corrections -> re-score)
   extract/
     digital.py     table extraction shared by both paths (header band, columns, rows, markers)
@@ -345,7 +361,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             203 Python tests (plus 12 in web/), including negative controls for the evaluator itself
+tests/             224 Python tests (plus 12 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

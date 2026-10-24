@@ -315,13 +315,14 @@ def test_llm_suggestions_reach_the_review_screen_and_the_feedback_log(tmp_path, 
         detail = client.get(f"/statements/{sid}").json()
         assert detail["status"] == "ready" and detail["meta"]["llm"]["status"] == "ok"
         review = client.get(f"/statements/{sid}/review").json()
-        llm_items = [i for i in review["items"] if i["group"] == "llm"]
-        assert llm_items, "model suggestions should be their own group"
+        llm_items = [i for i in review["items"] if "llm_suggested" in i["flags"]]
+        assert llm_items, "model suggestions should be reviewable"
+        assert all(i["group"] == "text" for i in llm_items)
         assert all(i["suggestion"] and "llm_suggested" in i["flags"] and not i["suggestion_verified"] for i in llm_items)
         assert any("language model" in r for r in llm_items[0]["reasons"])
         groups = {g["id"]: g for g in review["groups"]}
-        assert groups["llm"]["count"] == len(llm_items) and groups["llm"]["bulk"] is False
-        assert client.post(f"/statements/{sid}/corrections/bulk", json={"group": "llm"}).status_code == 422
+        assert groups["text"]["count"] >= len(llm_items) and groups["text"]["bulk"] is False
+        assert client.post(f"/statements/{sid}/corrections/bulk", json={"group": "text"}).status_code == 422
 
         first, second = llm_items[0], llm_items[1]
         r = client.post(f"/statements/{sid}/corrections", json={"row": first["row"], "field": first["field"], "action": "accept_suggestion"})
@@ -340,7 +341,7 @@ def test_an_unreachable_model_does_not_stop_extraction(tmp_path, scan_doc):
         sid = client.post("/statements", files={"file": (scan.name, f, "application/pdf")}).json()["id"]
     detail = client.get(f"/statements/{sid}").json()
     assert detail["status"] == "ready" and detail["meta"]["llm"]["status"] == "unavailable"
-    assert not [i for i in client.get(f"/statements/{sid}/review").json()["items"] if i["group"] == "llm"]
+    assert not [i for i in client.get(f"/statements/{sid}/review").json()["items"] if "llm_suggested" in i["flags"]]
 
 
 def test_llm_is_off_by_default(tmp_path, scan_doc):
@@ -349,4 +350,88 @@ def test_llm_is_off_by_default(tmp_path, scan_doc):
     assert client.get("/health").json()["llm"] is None
     with open(scan, "rb") as f:
         sid = client.post("/statements", files={"file": (scan.name, f, "application/pdf")}).json()["id"]
-    assert "llm" not in client.get(f"/statements/{sid}").json()["meta"]
+    meta = client.get(f"/statements/{sid}").json()["meta"]
+    assert "llm" not in meta and "rules" in meta  # the deterministic rules run whether or not a model is configured
+
+
+# ----------------------------------------------------------------------------- rules, tried before the model
+from stmtai.llm.fallback import RULE_FLAG, apply_rules, suggest  # noqa: E402
+from stmtai.llm.rules import date_rule, description_rule  # noqa: E402
+
+
+@pytest.mark.parametrize("read, expected", [
+    ("UPI/061778298363/P00JAPUROHIT", "UPI/061778298363/POOJAPUROHIT"),      # the letter O read as zero
+    ("UPI/264726751204/B00KMYSHOW", "UPI/264726751204/BOOKMYSHOW"),
+    ("UPI/848283661547/L0PA.KAR", "UPI/848283661547/LOPA KAR"),              # zero and a dot for a space
+    ("UPI/965569816934/RELIANCE.SMART", "UPI/965569816934/RELIANCE SMART"),
+    ("UPI/990020809379NIVAANTIWARI", "UPI/990020809379/NIVAANTIWARI"),       # the separator was lost
+    ("UPI/123456789012/RAHUL123", None),                                     # digits at the end of a handle are real
+    ("UPI/123456789012/R4HUL", None),                                        # 4 is not a look-alike we trust
+    ("UPI/123456789012/IRCTC", None),
+    ("POS ZOMATO MEERUT", None),
+    ("NEFT-N123456789012345-ORBITAL SOFTWARE", None),
+])
+def test_description_rule(read, expected):
+    assert description_rule(read) == expected
+
+
+def test_description_rule_never_touches_the_reference_digits():
+    for read in ("UPI/0610778298363/P00JAPUROHIT", "UPI/061778298363/B00K0"):
+        out = description_rule(read)
+        assert out is None or [r for r in __import__("re").findall(r"\d{10,}", out)] == [r for r in __import__("re").findall(r"\d{10,}", read)]
+
+
+D2 = dt.date
+@pytest.mark.parametrize("text, before, after, expected", [
+    ("29-Ju-26", D2(2026, 7, 28), D2(2026, 7, 30), "2026-07-29"),            # Jun or Jul: the neighbours decide
+    ("29-Jui-26", D2(2026, 7, 28), D2(2026, 7, 30), "2026-07-29"),
+    ("17Jut2026", D2(2026, 7, 16), D2(2026, 7, 18), "2026-07-17"),
+    ("30-Apr-26 UPV446512650192/VIDHISATHE", D2(2026, 4, 29), D2(2026, 5, 1), "2026-04-30"),  # swallowed the next column
+    ("02-Ju-26", None, None, None),                                          # nothing to tell June from July
+    ("31-Ju-26", D2(2026, 6, 30), D2(2026, 7, 31), "2026-07-31"),            # 31 June does not exist
+    ("not a date", None, None, None),
+])
+def test_date_rule(text, before, after, expected):
+    assert date_rule(text, before, after, D2(2026, 3, 1), D2(2026, 8, 31)) == expected
+
+
+def test_rules_attach_suggestions_without_a_model_and_without_overwriting(pdf):
+    raw, true_date = damaged(pdf)
+    t = raw.transactions
+    t[2].fields["description"] = FieldValue(text="UPI/310045678901/B00KMYSHOW", value="UPI/310045678901/B00KMYSHOW",
+                                           confidence=0.6, source="ocr")
+    t[5].fields["date"].text = f"{true_date.day:02d}-{true_date.strftime('%b')[:2]}-{true_date.year}"
+    before = {(i, n): fv.value for i, tx in enumerate(t) for n, fv in tx.fields.items()}
+    apply_rules(raw)
+    d = t[2].fields["description"]
+    assert d.suggestion == "UPI/310045678901/BOOKMYSHOW" and RULE_FLAG in d.flags and d.value == "UPI/310045678901/B00KMYSHOW"
+    assert raw.meta["rules"]["proposed"] >= 1 and "llm" not in raw.meta
+    assert before == {(i, n): fv.value for i, tx in enumerate(t) for n, fv in tx.fields.items()}
+
+
+def test_the_model_is_not_asked_about_cells_a_rule_already_settled(pdf):
+    raw, _ = damaged(pdf)
+    raw.transactions[2].fields["description"] = FieldValue(text="UPI/310045678901/B00KMYSHOW",
+                                                           value="UPI/310045678901/B00KMYSHOW", confidence=0.6, source="ocr")
+    raw.transactions[4].fields["description"] = FieldValue(text="UPI/777788889999/RCTC", value="UPI/777788889999/RCTC",
+                                                           confidence=0.6, source="ocr")
+    with FakeOllama(model()) as srv:
+        suggest(raw, OllamaClient(host=srv.host))
+        asked = [json.loads(line)["text"] for req in srv.requests for line in req["messages"][1]["content"].splitlines()]
+    assert "UPI/310045678901/B00KMYSHOW" not in asked      # a rule settled it
+    assert "UPI/777788889999/RCTC" in asked                 # no rule applies, so the model is asked
+    assert RULE_FLAG in raw.transactions[2].fields["description"].flags
+
+
+def test_evaluation_can_score_the_rules_alone(pdf):
+    from stmtai.llm.evaluate import evaluate_doc, render, summarize
+    label = Label.model_validate_json(next(Path(pdf).parent.glob(f"{Path(pdf).stem}.json")).read_text(encoding="utf-8"))
+    ext = extract_pdf(pdf)
+    truth = label.statement.transactions[2].description
+    fv = ext.transactions[2].fields["description"]
+    fv.value = fv.text = "UPI/310045678901/B00KMYSHOW"
+    fv.confidence = 0.6
+    doc = evaluate_doc(label, ext, None, [], batch_size=6)
+    assert doc["per_field"]["description"]["rule_proposed"] == 1
+    report = render(summarize([doc]), "", "scan_medium", None, {})
+    assert "rules only" in report and "Rules versus the model" in report

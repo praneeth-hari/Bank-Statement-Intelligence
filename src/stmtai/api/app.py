@@ -33,7 +33,7 @@ from ..extract.pipeline import extract_pdf
 from ..extract.scoring import review_items, threshold_for
 from ..feedback import summarize
 from ..llm.client import LLMUnavailable, from_spec
-from ..llm.fallback import llm_fallback
+from ..llm.fallback import apply_rules, llm_fallback
 from . import service
 from .service import ACTIONS, Store, apply_corrections, locate
 
@@ -93,6 +93,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         try:
             raw = extract_pdf(store.pdf_path(sid), ocr=cfg.ocr, ocr_backend=cfg.ocr_backend,
                               cache_dir=cfg.ocr_cache_dir, scored=False)
+            apply_rules(raw)  # deterministic text and date proposals; always on, cheap, and never overwrite
             if cfg.llm is not None:
                 try:
                     cfg.llm.check()
