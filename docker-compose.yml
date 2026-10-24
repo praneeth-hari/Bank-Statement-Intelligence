@@ -1,0 +1,22 @@
+# docker compose up --build   ->   http://localhost:8000
+# Everything stays on your machine. Uploaded PDFs, the database and the OCR cache live in the stmtai-data volume.
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - stmtai-data:/data
+    environment:
+      # Optional. Off unless you set it. To use Ollama running on your computer:
+      #   STMTAI_LLM=ollama:llama3.1:8b docker compose up
+      STMTAI_LLM: ${STMTAI_LLM:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # Optional. Requires an X-API-Key header on every call except /api/health.
+      STMTAI_API_KEY: ${STMTAI_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  stmtai-data:

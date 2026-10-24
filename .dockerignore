@@ -1,0 +1,14 @@
+.git
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+*.egg-info
+data/
+reports/
+notebooks/
+tests/
+docs/
+web/node_modules
+web/dist
+web/e2e

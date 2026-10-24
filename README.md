@@ -5,7 +5,8 @@ every field, and send only the uncertain ones to a human reviewer. Corrections f
 
 > **Status:** synthetic data with ground truth, digital-PDF and scan extraction, reconciliation-based
 > confidence scoring, an evaluation harness, an OCR engine benchmark, an HTTP API, a React review screen and
-> an optional local-LLM fallback (Ollama). Natural-language queries, Docker and a demo video are next.
+> an optional local-LLM fallback (Ollama), plain-English questions answered from approved statements with the rows
+> behind each answer, and one-command Docker. A demo video is next.
 
 All data in this repository is **synthetic**. Banks, people, accounts and IFSC codes are fictional,
 and every generated page is stamped as a sample. No real customer data is used or needed.
@@ -409,6 +410,20 @@ human review. Every field keeps its bounding box, so the review UI can highlight
 
 ## Quickstart
 
+**With Docker** (one command, nothing else to install; includes OCR and the review UI):
+
+```bash
+docker compose up --build        # then open http://localhost:8000
+```
+
+The API and the UI share port 8000 (the API is under `/api`). Uploaded PDFs, the database and the OCR cache live in a
+Docker volume, so they survive restarts; `docker compose down -v` deletes them. Nothing leaves your machine. To use a
+local Ollama model for the optional text and question parsers, run Ollama on your computer and start with
+`STMTAI_LLM=ollama:llama3.1:8b docker compose up` (the container reaches it at `host.docker.internal`). To require an
+API key, set `STMTAI_API_KEY`. Try it with the PDFs in `samples/`.
+
+**Without Docker:**
+
 ```bash
 pip install -e ".[dev,ocr]"          # [ocr] installs RapidOCR; digital PDFs work without it
 python -m stmtai.synth.generate --out data/synthetic --per-layout 6 --seed 42
@@ -467,7 +482,7 @@ whether that held.
 6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
 7. [x] Text and date suggestions: exact rules plus an optional Ollama fallback, both checked against the document, with an evaluation harness. Measured result: the rules help, the 3B text model adds nothing yet (off by default)
 8. [x] Natural-language query layer: rules plus an optional model parser, a validated query run by a plain engine, answers with the rows behind them, evaluated against independently computed answers
-9. [ ] Docker and a demo video
+9. [~] Docker: one command starts the API and the UI together (`docker compose up --build`). Demo video still to do
 
 ## Layout of the repo
 
@@ -482,7 +497,7 @@ src/stmtai/
   feedback.py      flag quality measured from reviewer corrections
   query/           question -> validated query -> engine; rules and optional model parser; evaluation (python -m stmtai.query.evaluate)
   llm/             rules and Ollama client, proposal checks, fallback and its evaluation (python -m stmtai.llm.evaluate)
-  api/             FastAPI app, storage and view-building (raw -> corrections -> re-score)
+  api/             FastAPI app, storage and view-building (raw -> corrections -> re-score); site.py serves the UI and API on one port
   extract/
     digital.py     table extraction shared by both paths (header band, columns, rows, markers)
     scanned.py     OCR path; ocr.py engine wrapper, deskew, cache; preprocess.py cleanup recipes
@@ -491,7 +506,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             284 Python tests (plus 15 in web/), including negative controls for the evaluator itself
+tests/             287 Python tests (plus 15 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines
