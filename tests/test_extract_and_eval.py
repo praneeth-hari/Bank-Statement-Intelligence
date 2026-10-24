@@ -55,7 +55,9 @@ def test_scans_are_rejected_by_the_digital_path(tmp_path):
     render(layout.name, st, digital)
     make_scan(digital, scan, "light", seed=1)
     with pytest.raises(NotDigitalError):
-        extract_pdf(scan)
+        extract_digital(scan)
+    with pytest.raises(NotDigitalError):
+        extract_pdf(scan, ocr=False)  # with OCR disabled the pipeline refuses rather than guessing
 
 
 # ----------------------------------------------------------------------------- scoring
@@ -96,16 +98,32 @@ def test_wrong_balance_is_localized_without_blaming_the_next_row(tmp_path):
     assert {r for r, _ in flagged} <= {k}
 
 
-def test_error_in_last_row_is_ambiguous_so_both_fields_are_flagged(tmp_path):
-    layout = LAYOUTS[0]
-    _, ext = _extract(layout, 9, tmp_path)
+def _corrupt_last_amount(ext):
     last = len(ext.transactions) - 1
-    fv = ext.transactions[last].fields.get("debit") or ext.transactions[last].fields["credit"]
-    fv.value += Decimal("10.00")
+    t = ext.transactions[last]
+    name = "debit" if t.value("debit") is not None else "credit"
+    true_value = t.fields[name].value
+    t.fields[name].value += Decimal("10.00")
+    return last, name, true_value
+
+
+def test_error_in_last_row_is_resolved_by_the_closing_balance(tmp_path):
+    _, ext = _extract(LAYOUTS[0], 9, tmp_path)
+    last, name, true_value = _corrupt_last_amount(ext)
     score(ext)
     flagged = {(r, f) for r, f, _, _ in review_items(ext) if r == last}
-    assert (last, "balance") in flagged
-    assert any(f in ("debit", "credit") for _, f in flagged)
+    assert flagged == {(last, name)}, "closing balance agrees with the row balance, so the amount is wrong"
+    fv = ext.transactions[last].fields[name]
+    assert fv.suggestion == true_value and "suggestion_verified" in fv.flags
+
+
+def test_error_in_last_row_without_closing_balance_flags_both(tmp_path):
+    _, ext = _extract(LAYOUTS[0], 9, tmp_path)
+    del ext.header["closing_balance"]
+    last, name, _ = _corrupt_last_amount(ext)
+    score(ext)
+    flagged = {(r, f) for r, f, _, _ in review_items(ext) if r == last}
+    assert (last, "balance") in flagged and (last, name) in flagged
 
 
 def test_two_separate_errors_are_both_found(tmp_path):

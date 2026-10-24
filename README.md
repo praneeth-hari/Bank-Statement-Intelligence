@@ -3,8 +3,9 @@
 Extract transactions from bank statements (digital PDFs and messy scans), score how much to trust
 every field, and send only the uncertain ones to a human reviewer. Corrections feed an evaluation loop.
 
-> **Status:** steps 1-2 of 7 complete: synthetic data with ground truth, digital-PDF extraction,
-> reconciliation-based confidence scoring, and an evaluation harness. OCR, API and review UI are next.
+> **Status:** steps 1-3 of 7 complete: synthetic data with ground truth, digital-PDF extraction, an OCR
+> path for scans, reconciliation-based confidence scoring, and an evaluation harness. Engine benchmark,
+> API and review UI are next.
 
 All data in this repository is **synthetic**. Banks, people, accounts and IFSC codes are fictional,
 and every generated page is stamped as a sample. No real customer data is used or needed.
@@ -36,6 +37,57 @@ Reading this: with a realistic error rate, a reviewer checks **under 2% of field
 **98-99% of the errors**. Detection degrades as errors crowd together, which is the honest result —
 see *Known limitations*.
 
+## Scans (OCR path)
+
+Scans go through RapidOCR (PP-OCRv3 on ONNX Runtime: CPU, pip-only), are deskewed from the OCR boxes, and
+feed the same table extractor in a tolerant mode (wider column tolerance, fuzzy headers, repair of
+damaged dates and amounts, missing columns inferred from content). Results on the same 8 / 12 / 12
+synthetic documents per severity (`python -m stmtai.evaluate --data data/synthetic --kind scan_medium`):
+
+| Scan severity | Rows found (recall) | Financial-field accuracy | All-field accuracy | Header | Balance chain closes |
+|---|---|---|---|---|---|
+| light (flatbed) | 100% | 100% | 99.6% | 100% | 100% of docs |
+| medium (phone photo) | 100% | 99.6% | 97.8% | 87.5% | 67% of docs |
+| heavy (poor photocopy) | 55% | 34.9% | 28.2% | 11.7% | 0% of docs |
+
+*Financial fields* are date, debit, credit and balance. Free-text description character accuracy is 99.9% /
+99.5% / 32.2% for light / medium / heavy.
+
+**Heavy scans fail, and that is reported rather than tuned away.** The engine drops and swaps digits at
+that degradation, so rows are lost and values are wrong. The confidence scoring does its job (96.6% of wrong
+fields are flagged), but 90% of fields end up in review, which means the document needs manual entry, not
+review. Image cleanup (illumination flattening, denoising, gamma, upscaling) did not help: an aggressive
+contrast stretch made it worse by fusing neighbouring digits. The default is therefore no preprocessing.
+Step 4 benchmarks other engines on the same scans.
+
+**What the reviewer sees on light/medium scans.** Two things that were hurting review load were fixed:
+value dates are now verified against the row's transaction date (review load on that field fell from
+about 95% to 1%), and free text uses its own threshold. OCR confidence is a blunt instrument for
+descriptions, so the threshold (0.80) was chosen on a *held-out* set generated with a different seed
+(`python -m stmtai.calibrate`), not on the data reported above:
+
+| Description threshold | Review load | Description errors caught |
+|---|---|---|
+| 0.80 (default) | 36% | 62.5% |
+| 0.90 | 69% | 83.9% |
+| 0.95 | 99.5% | 100% |
+
+Overall on medium scans, 13.9% of fields go to review and 73.9% of wrong fields (68 of 92) are caught.
+Of the 24 misses, 21 are descriptions, 2 are account numbers and 1 is the opening balance; all 3 wrong
+running balances and all 7 wrong dates were flagged. The threshold is a product dial: set it to 0.90 when
+text accuracy matters more than reviewer time.
+
+**Suggested corrections.** When the balance chain pins an error to one cell, the scorer proposes the value
+that would close it, but never overwrites what was read. A suggestion is only offered if it is within two
+digit edits of the OCR reading (otherwise the row is flagged `possible_missing_row`). On medium scans all
+3 suggestions were right; on heavy scans corroborated suggestions were right 62.5% of the time, so
+accepting them automatically would do net harm. Suggestions are for the reviewer, not for auto-apply.
+
+**Domain text rule.** OCR reads `UPI/` as `UP/` or `UPV` confidently and consistently, which no confidence
+threshold can catch. A small lexicon of Indian payment-rail prefixes (UPI, IMPS), applied only when a
+10-13 digit reference follows, restores them, and the digits are cross-checked against the reference
+column. Every such repair is flagged `prefix_snapped`.
+
 ## How confidence works
 
 The running balance is the strongest correctness signal a statement has:
@@ -60,15 +112,19 @@ human review. Every field keeps its bounding box, so the review UI can highlight
 - **Compensating errors are invisible.** If an amount and a balance are wrong by the same amount in the
   same direction, the chain still closes. No arithmetic check can catch this; only OCR confidence or a
   second reading can.
-- Extraction currently requires a text layer. Scans raise `NotDigitalError` until step 3.
+- **Heavy scans are not usable** with the current engine (see above). Results are on synthetic degradation,
+  which approximates but is not a real phone camera; treat them as relative, not absolute, numbers.
+- **Scan evaluation uses 32 scans.** Percentages on the heavy and light sets rest on few documents.
+- A missing row (OCR dropped a whole line) is detected through the balance chain but cannot be rebuilt.
 
 ## Quickstart
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,ocr]"          # [ocr] installs RapidOCR; digital PDFs work without it
 python -m stmtai.synth.generate --out data/synthetic --per-layout 6 --seed 42
 python -m stmtai.evaluate   --data data/synthetic --kind digital --out data/runs/digital
 python -m stmtai.robustness --data data/synthetic --out data/runs/digital
+python -m stmtai.evaluate   --data data/synthetic --kind scan_light --out reports/scan-light   # slow first run: OCR is cached
 pytest
 ```
 
@@ -115,7 +171,7 @@ whether that held.
 
 1. [x] Synthetic statement generator with ground truth
 2. [x] Digital extraction, confidence scoring, evaluation + robustness harness
-3. [ ] Scan path: cleanup, OCR with word confidence, table reconstruction
+3. [x] Scan path: deskew, OCR with confidence, tolerant table reconstruction, calibration
 4. [ ] Benchmark OCR engines against each other on the same labelled scans
 5. [ ] FastAPI service
 6. [ ] React review UI (page image with boxes, editable table, low-confidence cells highlighted)
@@ -129,13 +185,16 @@ src/stmtai/
   reconcile.py     running-balance and date checks
   evaluate.py      row alignment, per-field accuracy, review-loop metrics, report CLI
   robustness.py    injected-error detection harness
+  calibrate.py     per-field review threshold sweep on held-out data
   extract/
-    digital.py     text-layer extraction (header band, columns, rows, markers)
+    digital.py     table extraction shared by both paths (header band, columns, rows, markers)
+    scanned.py     OCR path; ocr.py engine wrapper, deskew, cache; preprocess.py cleanup recipes
+    text.py        payment-rail prefix lexicon
     scoring.py     per-field confidence from the balance chain
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             71 tests, including negative controls for the evaluator itself
+tests/             125 tests, including negative controls for the evaluator itself
 samples/           a few generated documents
 reports/           committed output of the evaluation and robustness runs
 ```

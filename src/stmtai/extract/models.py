@@ -25,7 +25,10 @@ class FieldValue(BaseModel):
     confidence: float = 0.0
     bbox: Optional[BBox] = None
     source: str = "text_layer"  # text_layer | ocr | inferred
-    flags: list[str] = Field(default_factory=list)  # why confidence was lowered, e.g. 'balance_chain_break'
+    flags: list[str] = Field(default_factory=list)  # why confidence changed, e.g. 'balance_chain_break'
+    # A corrected value proposed by the balance chain, for the reviewer to accept or reject. The value as
+    # read is never overwritten. 'suggestion_verified' in flags means a neighbouring row corroborates it.
+    suggestion: Any = None
 
 
 class ExtractedTransaction(BaseModel):

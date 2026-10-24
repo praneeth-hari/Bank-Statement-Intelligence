@@ -20,13 +20,15 @@ from typing import Any, Callable, Optional
 
 from .extract.models import ExtractedStatement, ExtractedTransaction
 from .extract.pipeline import extract_pdf
-from .extract.scoring import REVIEW_THRESHOLD
+from .extract.scoring import REVIEW_THRESHOLD, REVIEW_THRESHOLDS, apply_suggestions, threshold_for
 from .schema import Label, Transaction
 
 HEADER_FIELDS = ["bank_name", "account_holder", "account_number", "ifsc", "branch",
                  "period_start", "period_end", "opening_balance", "closing_balance", "currency"]
 ROW_FIELDS = ["date", "value_date", "description", "ref", "debit", "credit", "balance"]
 ALIGN_FIELDS = ["date", "description", "debit", "credit", "balance"]
+FINANCIAL_FIELDS = ("date", "debit", "credit", "balance")  # what an accountant cannot afford to get wrong
+TEXT_ROW_FIELDS = ("description", "ref")  # free text: judged by character accuracy as well as exact match
 _TEXT_FIELDS = {"description", "ref", "bank_name", "account_holder", "branch"}
 _CODE_FIELDS = {"account_number", "ifsc", "currency"}
 
@@ -44,6 +46,23 @@ def _norm(name: str, value: Any) -> Any:
 
 def values_equal(name: str, truth: Any, got: Any) -> bool:
     return _norm(name, truth) == _norm(name, got)
+
+
+def _edit_distance(a: str, b: str) -> int:
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def char_errors(name: str, truth: Any, got: Any) -> tuple[int, int]:
+    """(edit distance, reference length) on normalised text. A missing value counts as every character wrong."""
+    t = _norm(name, truth) or ""
+    g = _norm(name, got) or ""
+    return _edit_distance(t, g), len(t)
 
 
 def _pair_score(truth: Transaction, got: ExtractedTransaction) -> float:
@@ -93,11 +112,16 @@ class DocEval:
     row_correct: dict[str, int] = field(default_factory=dict)
     header_total: dict[str, int] = field(default_factory=dict)
     header_correct: dict[str, int] = field(default_factory=dict)
-    conf_pairs: list[tuple[float, bool]] = field(default_factory=list)  # (confidence, was_correct)
+    conf_pairs: list[tuple[str, float, bool]] = field(default_factory=list)  # (field, confidence, was_correct)
     reconciles: bool = False
     exact: bool = False
     error: str = ""
     examples: list[dict] = field(default_factory=list)
+    # suggestion quality: (verified, suggestion_correct, value_as_read_was_correct)
+    suggestions: list[tuple[bool, bool, bool]] = field(default_factory=list)
+    char_err: dict[str, int] = field(default_factory=dict)  # text fields: total edit distance
+    char_len: dict[str, int] = field(default_factory=dict)  # text fields: total reference length
+    after: Optional["DocEval"] = None  # the same document with all suggestions accepted
 
 
 def _bump(d: dict[str, int], key: str, by: int = 1) -> None:
@@ -120,6 +144,10 @@ def evaluate_pair(label: Label, ext: ExtractedStatement, kind: str = "digital", 
         for f in fields:
             _bump(ev.row_total, f)
             expected = getattr(truth[ti], f)
+            if f in TEXT_ROW_FIELDS:
+                errs, length = char_errors(f, expected, got[gi].value(f) if gi is not None else None)
+                _bump(ev.char_err, f, errs)
+                _bump(ev.char_len, f, length)
             if gi is None:
                 all_correct = False
                 continue
@@ -134,7 +162,11 @@ def evaluate_pair(label: Label, ext: ExtractedStatement, kind: str = "digital", 
                                         "truth": str(expected), "got": str(actual)})
             fv = got[gi].fields.get(f)
             if fv is not None:
-                ev.conf_pairs.append((fv.confidence, ok))
+                ev.conf_pairs.append((f, fv.confidence, ok))
+                if fv.suggestion is not None or "suggest_clear" in fv.flags:
+                    proposed = fv.suggestion if fv.suggestion is not None else None
+                    ev.suggestions.append(("suggestion_verified" in fv.flags,
+                                           values_equal(f, expected, proposed), ok))
 
     for f in HEADER_FIELDS:
         _bump(ev.header_total, f)
@@ -150,7 +182,7 @@ def evaluate_pair(label: Label, ext: ExtractedStatement, kind: str = "digital", 
                 ev.examples.append({"doc": label.doc_id, "row": None, "field": f,
                                     "truth": str(expected), "got": str(actual)})
         if fv is not None:
-            ev.conf_pairs.append((fv.confidence, ok))
+            ev.conf_pairs.append((f, fv.confidence, ok))
 
     ev.reconciles = bool(ext.meta.get("summary", {}).get("reconciles", False))
     ev.exact = all_correct and ev.truth_rows == ev.got_rows
@@ -168,7 +200,7 @@ def summarize(docs: list[DocEval]) -> dict:
         row_correct: dict[str, int] = {}
         head_total: dict[str, int] = {}
         head_correct: dict[str, int] = {}
-        pairs: list[tuple[float, bool]] = []
+        pairs: list[tuple[str, float, bool]] = []
         for d in items:
             for k, v in d.row_total.items():
                 _bump(row_total, k, v)
@@ -182,9 +214,30 @@ def summarize(docs: list[DocEval]) -> dict:
         truth_rows = sum(d.truth_rows for d in items)
         got_rows = sum(d.got_rows for d in items)
         matched = sum(d.matched_rows for d in items)
-        flagged = [(c, ok) for c, ok in pairs if c < REVIEW_THRESHOLD]
-        wrong = [(c, ok) for c, ok in pairs if not ok]
-        caught = [p for p in wrong if p[0] < REVIEW_THRESHOLD]
+        flagged = [p for p in pairs if p[1] < threshold_for(p[0])]
+        wrong = [p for p in pairs if not p[2]]
+        caught = [p for p in wrong if p[1] < threshold_for(p[0])]
+        by_field: dict[str, dict] = {}
+        for name in sorted({p[0] for p in pairs}):
+            fp = [p for p in pairs if p[0] == name]
+            fw = [p for p in fp if not p[2]]
+            ff = [p for p in fp if p[1] < threshold_for(name)]
+            by_field[name] = {"threshold": threshold_for(name), "n": len(fp), "flag_rate": _ratio(len(ff), len(fp)),
+                              "wrong": len(fw), "wrong_caught": sum(1 for p in fw if p[1] < threshold_for(name))}
+        char_err: dict[str, int] = {}
+        char_len: dict[str, int] = {}
+        for d in items:
+            for k, v in d.char_err.items():
+                _bump(char_err, k, v)
+            for k, v in d.char_len.items():
+                _bump(char_len, k, v)
+        fin_total = sum(row_total.get(k, 0) for k in FINANCIAL_FIELDS)
+        fin_correct = sum(row_correct.get(k, 0) for k in FINANCIAL_FIELDS)
+        sugg = [s for d in items for s in d.suggestions]
+        verified = [s for s in sugg if s[0]]
+        after_docs = [d.after for d in items if d.after is not None]
+        after_total = sum(sum(d.row_total.values()) for d in after_docs)
+        after_correct = sum(sum(d.row_correct.values()) for d in after_docs)
         return {
             "docs": len(items),
             "failed_docs": sum(1 for d in items if d.error),
@@ -193,6 +246,9 @@ def summarize(docs: list[DocEval]) -> dict:
             "row_recall": _ratio(matched, truth_rows),
             "row_precision": _ratio(matched, got_rows),
             "row_field_accuracy": _ratio(sum(row_correct.values()), sum(row_total.values())),
+            "financial_field_accuracy": _ratio(fin_correct, fin_total),
+            "text_char_accuracy": {k: round(1 - char_err.get(k, 0) / char_len[k], 4) if char_len.get(k) else None
+                                   for k in sorted(char_len)},
             "header_field_accuracy": _ratio(sum(head_correct.values()), sum(head_total.values())),
             "exact_match_docs": _ratio(sum(d.exact for d in items), len(items)),
             "reconcile_rate": _ratio(sum(d.reconciles for d in items), len(items)),
@@ -200,13 +256,33 @@ def summarize(docs: list[DocEval]) -> dict:
             "per_header_accuracy": {k: _ratio(head_correct.get(k, 0), v) for k, v in sorted(head_total.items())},
             "review": {
                 "threshold": REVIEW_THRESHOLD,
+                "field_thresholds": dict(REVIEW_THRESHOLDS),
+                "by_field": by_field,
                 "fields_compared": len(pairs),
                 "fields_flagged": len(flagged),
                 "flag_rate": _ratio(len(flagged), len(pairs)),
                 "wrong_fields": len(wrong),
                 "wrong_caught_by_flags": len(caught),
                 "error_recall": _ratio(len(caught), len(wrong)),
-                "flag_precision": _ratio(sum(1 for _, ok in flagged if not ok), len(flagged)),
+                "flag_precision": _ratio(sum(1 for p in flagged if not p[2]), len(flagged)),
+            },
+            "suggestions": {
+                "total": len(sugg),
+                "correct": sum(1 for s in sugg if s[1]),
+                "precision": _ratio(sum(1 for s in sugg if s[1]), len(sugg)),
+                "verified_total": len(verified),
+                "verified_precision": _ratio(sum(1 for s in verified if s[1]), len(verified)),
+                "unverified_precision": _ratio(sum(1 for s in sugg if not s[0] and s[1]),
+                                               sum(1 for s in sugg if not s[0])),
+                "fixes_errors": sum(1 for s in sugg if s[1] and not s[2]),
+                "breaks_correct": sum(1 for s in sugg if not s[1] and s[2]),
+            },
+            "after_suggestions": {
+                "row_field_accuracy": _ratio(after_correct, after_total),
+                "per_field_accuracy": (
+                    {k: _ratio(sum(d.row_correct.get(k, 0) for d in after_docs),
+                               sum(d.row_total.get(k, 0) for d in after_docs))
+                     for k in sorted({k for d in after_docs for k in d.row_total})} if after_docs else {}),
             },
         }
 
@@ -229,8 +305,11 @@ def render_markdown(summary: dict, kind: str) -> str:
         f"# Extraction report: `{kind}`", "",
         f"{o['docs']} documents, {o['rows_truth']} ground-truth rows. "
         f"Row recall {_pct(o['row_recall'])}, row precision {_pct(o['row_precision'])}, "
-        f"row-field accuracy {_pct(o['row_field_accuracy'])}, header accuracy {_pct(o['header_field_accuracy'])}, "
-        f"exact-match documents {_pct(o['exact_match_docs'])}.", "",
+        f"**financial-field accuracy {_pct(o['financial_field_accuracy'])}** (date, debit, credit, balance), "
+        f"all-field accuracy {_pct(o['row_field_accuracy'])}, header accuracy {_pct(o['header_field_accuracy'])}, "
+        f"exact-match documents {_pct(o['exact_match_docs'])}. "
+        f"Free-text character accuracy: "
+        + ", ".join(f"{k} {_pct(v)}" for k, v in o["text_char_accuracy"].items()) + ".", "",
         "| Layout | Docs | Rows (truth / extracted) | Row recall | Row precision | Field accuracy | Header accuracy | Exact docs | Reconciles |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
@@ -250,6 +329,20 @@ def render_markdown(summary: dict, kind: str) -> str:
         f"Wrong fields: {r['wrong_fields']}; caught by a flag: {r['wrong_caught_by_flags']} "
         f"(error recall {_pct(r['error_recall'])}, flag precision {_pct(r['flag_precision'])}).",
     ]
+    s = o["suggestions"]
+    if s["total"]:
+        a = o["after_suggestions"]
+        lines += [
+            "", "## Balance-chain suggestions", "",
+            f"{s['total']} corrections proposed; {_pct(s['precision'])} correct overall, "
+            f"{_pct(s['verified_precision'])} of the {s['verified_total']} corroborated by a neighbouring row, "
+            f"{_pct(s['unverified_precision'])} of the rest. Accepting every suggestion fixes {s['fixes_errors']} "
+            f"wrong fields and breaks {s['breaks_correct']} correct ones, taking row-field accuracy from "
+            f"{_pct(o['row_field_accuracy'])} to {_pct(a['row_field_accuracy'])}.", "",
+            "| Field | As read | After suggestions |", "|---|---|---|",
+        ]
+        lines += [f"| {k} | {_pct(o['per_field_accuracy'].get(k))} | {_pct(v)} |"
+                  for k, v in a["per_field_accuracy"].items()]
     if summary["errors"]:
         lines += ["", "## Example errors", "", "| Doc | Row | Field | Truth | Got |", "|---|---|---|---|---|"]
         lines += [f"| {e['doc']} | {e['row']} | {e['field']} | {e['truth']} | {e['got']} |" for e in summary["errors"][:15]]
@@ -268,7 +361,10 @@ def evaluate_dataset(data_dir: Path, kind: str = "digital",
         if not pdf.exists():
             continue
         try:
-            results.append(evaluate_pair(label, extractor(pdf), kind))
+            ext = extractor(pdf)
+            ev = evaluate_pair(label, ext, kind)
+            ev.after = evaluate_pair(label, apply_suggestions(ext), kind)
+            results.append(ev)
         except Exception as exc:  # a failed document counts against the metrics, it is not hidden
             failed = DocEval(label.doc_id, label.layout, kind, truth_rows=len(label.statement.transactions),
                              error=f"{type(exc).__name__}: {exc}")

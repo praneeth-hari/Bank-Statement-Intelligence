@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+ocr = ["rapidocr-onnxruntime>=1.2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
