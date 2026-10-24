@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { AskPanel } from "../components/AskPanel";
 import type { StatementSummary } from "../types";
 
 function when(iso: string): string {
@@ -58,6 +59,8 @@ export function StatementList() {
                  onChange={(e) => { if (e.target.files) void upload(e.target.files); e.target.value = ""; }} />
         </div>
         {error && <p className="error" role="alert">{error}</p>}
+
+        {items && items.length > 0 && <AskPanel approved={items.filter((s) => s.approved && s.status === "ready").length} />}
 
         {items && items.length === 0 && <p className="empty">No statements yet. Upload one to see what was extracted and what needs a look.</p>}
         {items && items.length > 0 && (

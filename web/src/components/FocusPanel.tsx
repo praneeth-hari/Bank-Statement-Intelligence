@@ -33,13 +33,15 @@ export function FocusPanel({ stmt, item, busy, editing, draft, onDraft, onEdit, 
 
   const read = displayValue(item.field, item.value, item.text || "nothing read");
   const hasSuggestion = item.suggestion !== null;
+  const fromModel = item.flags.includes("llm_suggested");
+  const fromRule = item.flags.includes("rule_suggested");
   const clears = !hasSuggestion && item.flags.includes("suggest_clear");
   const suggestion = hasSuggestion ? displayValue(item.field, item.suggestion) : null;
   const lines = explainRow(stmt, item);
   const severe = item.group === "chain";
 
   const primary = hasSuggestion
-    ? { label: `Use ${suggestion}`, action: "accept_suggestion" as Action }
+    ? { label: suggestion !== null && suggestion.length > 16 ? "Use suggestion" : `Use ${suggestion}`, action: "accept_suggestion" as Action }
     : clears
       ? { label: "Clear this cell", action: "accept_suggestion" as Action }
       : { label: "Looks right", action: "confirm" as Action };
@@ -79,8 +81,8 @@ export function FocusPanel({ stmt, item, busy, editing, draft, onDraft, onEdit, 
               <b data-testid="read-value">{read}</b>
             </div>
             {hasSuggestion && (
-              <div className="val sug">
-                <small>Suggested</small>
+              <div className={`val sug ${fromModel || fromRule ? "model" : ""}`}>
+                <small>{fromModel ? "Suggested by a language model" : fromRule ? "Suggested by a rule" : "Suggested"}</small>
                 <b data-testid="suggested-value">{suggestion}</b>
               </div>
             )}

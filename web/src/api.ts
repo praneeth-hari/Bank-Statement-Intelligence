@@ -1,4 +1,4 @@
-import type { Action, ReviewResponse, StatementDetail, StatementSummary } from "./types";
+import type { Action, QueryResponse, ReviewResponse, StatementDetail, StatementSummary } from "./types";
 
 export const API_BASE: string = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -50,6 +50,7 @@ export const api = {
     request<{ deleted: number }>(`/statements/${id}/corrections/${correctionId}`, { method: "DELETE" }),
   approve: (id: string) => request<{ approved: boolean }>(`/statements/${id}/approve`, json("POST")),
   reopen: (id: string) => request<{ approved: boolean }>(`/statements/${id}/reopen`, json("POST")),
+  ask: (question: string) => request<QueryResponse>("/query", json("POST", { question })),
   imageUrl: (path: string, dpi: number) => `${API_BASE}${path}?dpi=${dpi}`,
   exportUrl: (id: string, fmt: "csv" | "json") => `${API_BASE}/statements/${id}/export.${fmt}`,
 };

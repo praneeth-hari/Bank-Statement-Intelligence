@@ -182,7 +182,7 @@ and should never have to work out *why* a cell is flagged.
 - **Keyboard first:** Enter accepts, E edits, K keeps, arrows move, U undoes. Every action can be undone.
 - **Approve is locked until the queue is empty**; approved statements are frozen until reopened.
 
-Verified two ways: 12 unit tests for the arithmetic, queue ordering and geometry (`npm test`), and an
+Verified two ways: 15 unit tests for the arithmetic, queue ordering, geometry and answer formatting (`npm test`), and an
 end-to-end run in a real browser against the real API (`node web/e2e/smoke.mjs <scan.pdf>`) that uploads a
 scan, accepts a suggestion, undoes it, bulk-confirms, rejects bad input, works the queue to zero, approves and
 exports.
@@ -321,6 +321,14 @@ How it works, and why it is built this way:
 - **Honest about what it combined.** Several statements are combined unless `statement_ids` narrows it, and the
   reply says they may be different accounts. Rows without a date, balance or a single amount are left out and
   counted.
+
+In the UI the question box sits on the statement list page, because a question spans every approved statement.
+It is disabled until one is approved. An answer shows the number, how the question was understood and whether
+rules or a language model read it (a model's reading carries a dashed "check this reading" tag, like model
+suggestions on the review screen), then the transactions counted, each with a link to its statement. A refusal
+says why. Amounts are formatted from the API's decimal strings in integer paise, never through floating point.
+A second browser check (`node web/e2e/ask.mjs <digital.pdf> <expected UPI total>`) approves a statement and
+asks four questions, including one that must be refused and one with an unknown word.
 
 Evaluation (`python -m stmtai.query.evaluate`, add `--model qwen2.5:3b` to try the model parser): 42 answerable
 questions of ten kinds, half plainly worded and half indirect, plus 8 that must be refused, asked of the synthetic
@@ -483,7 +491,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             273 Python tests (plus 12 in web/), including negative controls for the evaluator itself
+tests/             284 Python tests (plus 15 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

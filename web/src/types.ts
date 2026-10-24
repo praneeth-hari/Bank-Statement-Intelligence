@@ -37,7 +37,7 @@ export interface StatementDetail extends StatementSummary {
   corrections: number;
 }
 
-export type GroupId = "chain" | "repaired" | "prefix" | "header" | "other";
+export type GroupId = "chain" | "repaired" | "text" | "prefix" | "header" | "other";
 
 export interface ReviewItem {
   key: string;
@@ -60,3 +60,26 @@ export interface GroupInfo { id: GroupId; label: string; hint: string; bulk: boo
 export interface ReviewResponse { count: number; items: ReviewItem[]; groups: GroupInfo[]; reconciles: boolean }
 
 export type Action = "correct" | "confirm" | "accept_suggestion";
+
+export interface QueryRow {
+  statement_id: string; filename: string; row: number; date: string; description: string;
+  debit: string | null; credit: string | null; balance: string;
+}
+
+export interface QueryResponse {
+  question: string;
+  answered: boolean;
+  reason?: string;
+  parser: "rules" | "model" | null;
+  statements: string[];
+  rows_considered: number;
+  rows_skipped: number;
+  notes: string[];
+  interpretation?: string;
+  kind?: "number" | "groups" | "rows" | "none";
+  unit?: "INR" | "transactions";
+  matched?: number;
+  value?: string | null;
+  groups?: { key: string; value: string }[];
+  rows?: QueryRow[];
+}
