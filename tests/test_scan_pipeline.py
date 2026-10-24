@@ -112,3 +112,11 @@ def test_sweep_trades_load_for_recall():
 def test_values_equal_is_used_for_dates():
     import datetime as dt
     assert values_equal("date", dt.date(2025, 1, 2), dt.date(2025, 1, 2))
+
+
+def test_snap_prefix_keeps_every_digit_of_the_reference():
+    """OCR merges ``I/`` into one ``V``; the 12-digit reference after it must not lose its first digit."""
+    fixed, used = snap_prefix("UPV160733754330/GEORGERAI")
+    assert used == "UPI/"
+    assert fixed == "UPI/160733754330/GEORGERAI"
+    assert snap_prefix("UP1/123456789012/Y")[0] == "UPI/123456789012/Y"  # a '1' standing in for 'I' is still dropped

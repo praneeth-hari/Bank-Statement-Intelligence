@@ -13,6 +13,7 @@ FLAG_REASONS: dict[str, str] = {
                               "reading error. A row may be missing.",
     "ocr_repaired": "The text was damaged by the scan and repaired automatically. Check it against the page.",
     "prefix_snapped": "A damaged payment prefix (UPI/IMPS) was restored automatically.",
+    "llm_suggested": "A language model proposed this correction. The arithmetic cannot check it, so compare it with the scan.",
     "suggestion_verified": "A neighbouring row confirms the suggested value.",
     "suggest_clear": "The balance arithmetic suggests this cell should be empty.",
     "human_corrected": "Corrected by a reviewer.",

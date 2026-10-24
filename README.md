@@ -3,9 +3,9 @@
 Extract transactions from bank statements (digital PDFs and messy scans), score how much to trust
 every field, and send only the uncertain ones to a human reviewer. Corrections feed an evaluation loop.
 
-> **Status:** steps 1-6 of 7 complete: synthetic data with ground truth, digital-PDF and scan extraction,
-> reconciliation-based confidence scoring, an evaluation harness, an OCR engine benchmark, an HTTP API
-> and a React review screen. LLM fallback, natural-language queries and Docker are next.
+> **Status:** synthetic data with ground truth, digital-PDF and scan extraction, reconciliation-based
+> confidence scoring, an evaluation harness, an OCR engine benchmark, an HTTP API, a React review screen and
+> an optional local-LLM fallback (Ollama). Natural-language queries, Docker and a demo video are next.
 
 All data in this repository is **synthetic**. Banks, people, accounts and IFSC codes are fictional,
 and every generated page is stamped as a sample. No real customer data is used or needed.
@@ -188,6 +188,49 @@ exports.
 
 Not built yet: inserting a row the OCR dropped, per-user accounts, and drawing a box to re-read a region.
 
+## The LLM fallback (step 7)
+
+Arithmetic settles money: a wrong amount or balance gets a suggestion that the next row confirms. It says
+nothing about *text*. What is left after scoring is mostly a merchant or person's name the OCR got wrong by a
+character (`RCTC` for `IRCTC`, `DECATHL.N`) and dates it could not parse (`17Jut2026`). That is where a
+language model is useful, so a local one (Ollama, nothing leaves the machine) is asked about those cells and
+only those.
+
+The model is a **proposer, not an authority**. Its answer becomes a suggestion only if the document itself
+backs it up:
+
+| field | the checks |
+|---|---|
+| description | digits identical to what was read, payment prefix kept, at most 3 character edits, not merely a spacing or case change |
+| date | every number visible in the scan is part of the proposed date; it sits between the previous and next transaction dates and inside the statement period; a month written in letters matches |
+| money, references | never asked |
+
+A suggestion never overwrites the value read, is flagged `llm_suggested`, gets its own review group
+(*Suggested by a language model*, never bulk-confirmable), and is logged so `/feedback` reports the **accept
+rate of model suggestions separately from arithmetic ones**. If Ollama is down or the model is not pulled,
+the statement is extracted and scored exactly as before and `meta.llm` says why.
+
+```bash
+ollama pull qwen2.5:3b                           # ~1.9 GB, fits a 4 GB GPU
+set STMTAI_LLM=ollama:qwen2.5:3b                 # Windows cmd; use export on macOS/Linux
+python -m stmtai.api                             # uploads now go through the fallback
+
+python -m stmtai.llm.evaluate --kind scan_medium --limit 12     # measure it against the ground truth
+```
+
+The evaluation reports, per field, cells **fixed**, correct cells **put at risk** ("broke"), and what the
+checks blocked, including how many blocked answers would have broken a correct cell. Replies are cached in
+`data/llm_cache`, so re-running costs nothing. See `docs/ollama.md` for setup.
+
+What this step found before any model ran: the UPI prefix repair was swallowing the first digit of the
+reference number when OCR merged `I/` into one character (`UPV160733754330`). A greedy regex was the cause,
+and 20 of the 58 wrong descriptions flagged on the medium scans came from it. It is fixed in plain code,
+with a test, because a model should not be used to paper over a bug.
+
+Limits, stated plainly: a wrong one-letter edit that keeps the digits and the prefix passes every check, so
+the reviewer is still the safety net and the accept rate is the metric to watch. Real-model results depend on
+the model you pull; they are not claimed here until you run the evaluation.
+
 ## How confidence works
 
 The running balance is the strongest correctness signal a statement has:
@@ -216,6 +259,8 @@ human review. Every field keeps its bounding box, so the review UI can highlight
   which approximates but is not a real phone camera; treat them as relative, not absolute, numbers.
 - **Scan evaluation uses 32 scans.** Percentages on the heavy and light sets rest on few documents.
 - A missing row (OCR dropped a whole line) is detected through the balance chain but cannot be rebuilt.
+- **LLM suggestions are unverified guesses by nature.** The checks catch changed digits, lost prefixes and
+  impossible dates, not a plausible wrong letter. Only the reviewer's accept rate says whether a model is worth using.
 
 ## Quickstart
 
@@ -275,7 +320,9 @@ whether that held.
 4. [x] Benchmark OCR engines on the same labelled scans: RapidOCR and Tesseract scored; Unlimited-OCR run on Colab but not scored (see the benchmark section)
 5. [x] FastAPI service: upload, review queue, corrections with undo, approval, export, feedback metrics
 6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
-7. [ ] LLM fallback for messy rows, natural-language query layer, Docker, demo video
+7. [x] LLM fallback with Ollama: proposals checked against the document, own review group, accept rate in `/feedback`
+8. [ ] Natural-language query layer over approved statements
+9. [ ] Docker and a demo video
 
 ## Layout of the repo
 
@@ -288,6 +335,7 @@ src/stmtai/
   calibrate.py     per-field review threshold sweep on held-out data
   benchmark.py     engine-independent OCR text benchmark (amount/date/reference recall)
   feedback.py      flag quality measured from reviewer corrections
+  llm/             Ollama client, proposal checks, fallback, and its evaluation (python -m stmtai.llm.evaluate)
   api/             FastAPI app, storage and view-building (raw -> corrections -> re-score)
   extract/
     digital.py     table extraction shared by both paths (header band, columns, rows, markers)
@@ -297,7 +345,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             159 Python tests (plus 12 in web/), including negative controls for the evaluator itself
+tests/             203 Python tests (plus 12 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

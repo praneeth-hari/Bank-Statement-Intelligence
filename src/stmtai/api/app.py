@@ -32,6 +32,8 @@ from pydantic import BaseModel
 from ..extract.pipeline import extract_pdf
 from ..extract.scoring import review_items, threshold_for
 from ..feedback import summarize
+from ..llm.client import LLMUnavailable, from_spec
+from ..llm.fallback import llm_fallback
 from . import service
 from .service import ACTIONS, Store, apply_corrections, locate
 
@@ -44,6 +46,8 @@ class Settings:
     ocr: bool = os.environ.get("STMTAI_OCR", "1") != "0"
     ocr_backend: Any = None  # inject an engine (tests, or a non-default one); None means RapidOCR
     ocr_cache_dir: Path = field(default_factory=lambda: Path(os.environ.get("STMTAI_OCR_CACHE", "data/ocr_cache")))
+    # Optional LLM fallback: STMTAI_LLM=ollama or ollama:<model>. Inject a client in tests; None switches it off.
+    llm: Any = field(default_factory=lambda: from_spec(os.environ.get("STMTAI_LLM")))
     api_key: Optional[str] = field(default_factory=lambda: os.environ.get("STMTAI_API_KEY") or None)
     max_upload_mb: int = int(os.environ.get("STMTAI_MAX_UPLOAD_MB", "25"))
     cors_origins: list[str] = field(default_factory=lambda: [
@@ -89,6 +93,12 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         try:
             raw = extract_pdf(store.pdf_path(sid), ocr=cfg.ocr, ocr_backend=cfg.ocr_backend,
                               cache_dir=cfg.ocr_cache_dir, scored=False)
+            if cfg.llm is not None:
+                try:
+                    cfg.llm.check()
+                    llm_fallback(raw, cfg.llm)
+                except LLMUnavailable as exc:  # extraction stands on its own; say why the model did not help
+                    raw.meta["llm"] = {"status": "unavailable", "error": str(exc)}
             store.set_ready(sid, raw)
         except Exception as exc:  # reported on the record, never swallowed
             store.set_failed(sid, f"{type(exc).__name__}: {exc}")
@@ -104,7 +114,8 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
 
     @app.get("/health")
     def health() -> dict:
-        return {"status": "ok", "ocr_enabled": cfg.ocr, "auth": bool(cfg.api_key)}
+        return {"status": "ok", "ocr_enabled": cfg.ocr, "auth": bool(cfg.api_key),
+                "llm": cfg.llm.name if cfg.llm is not None else None}
 
     @app.post("/statements", status_code=202, dependencies=[Depends(auth)])
     def upload(background: BackgroundTasks, file: UploadFile = File(...)) -> dict:

@@ -164,6 +164,7 @@ def statement_json(ext: ExtractedStatement) -> dict:
 GROUPS: list[dict] = [
     {"id": "chain", "label": "Balance does not add up", "hint": "Fix these first. They may clear other flags.", "bulk": False},
     {"id": "repaired", "label": "Date or amount repaired", "hint": "Scan damage fixed automatically.", "bulk": False},
+    {"id": "llm", "label": "Suggested by a language model", "hint": "Not checked by arithmetic. Compare each with the scan.", "bulk": False},
     {"id": "prefix", "label": "Payment prefix restored, digits match", "hint": "UPI/ or IMPS/ rebuilt; the reference column agrees.", "bulk": True},
     {"id": "header", "label": "Account details", "hint": "Name, number, IFSC, period.", "bulk": False},
     {"id": "other", "label": "Other low-confidence text", "hint": "The scan was hard to read here.", "bulk": False},
@@ -175,6 +176,8 @@ def group_of(row: Optional[int], field: str, flags: list[str]) -> str:
         return "chain"
     if row is None:
         return "header"
+    if "llm_suggested" in flags:
+        return "llm"
     if "prefix_snapped" in flags and "reference_matches" in flags:
         return "prefix"
     if "ocr_repaired" in flags and field in ("date", "value_date", "debit", "credit", "balance"):

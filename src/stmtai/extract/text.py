@@ -17,8 +17,10 @@ from typing import Optional
 
 # (canonical prefix, pattern for the damaged prefix). The lookahead requires the digit run that follows a
 # genuine rail reference, which keeps this from rewriting ordinary words that happen to start with 'UP'.
+# The damaged-prefix quantifier is lazy on purpose: ``UPV160733754330`` is ``UPI/`` plus a 12-digit reference
+# (OCR merged ``I/`` into ``V``), and a greedy match swallowed the first digit of the reference as a "1" glyph.
 _RAILS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("UPI/", re.compile(r"^U[PF][A-Za-z1|!]{0,2}[/\\\s-]?(?=\d{10,13}(?!\d))")),
+    ("UPI/", re.compile(r"^U[PF][A-Za-z1|!]{0,2}?[/\\\s-]?(?=\d{10,13}(?!\d))")),
     ("IMPS/", re.compile(r"^I[MN][PF][S5]?[/\\\s-]?(?=\d{10,13}(?!\d))")),
 )
 _DIGIT_RUN = re.compile(r"\d{10,}")

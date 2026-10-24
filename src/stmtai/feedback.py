@@ -36,6 +36,12 @@ def summarize(corrections: list[dict]) -> dict:
         unflagged = [c for c in rows if not c["was_flagged"]]
         wrong_flagged = [c for c in flagged if _changed(c)]
         with_suggestion = [c for c in flagged if c["had_suggestion"]]
+
+        def source(rows: list[dict]) -> dict:
+            accepted = sum(1 for c in rows if c["action"] == "accept_suggestion")
+            return {"offered": len(rows), "accepted": accepted, "accept_rate": _ratio(accepted, len(rows))}
+
+        llm = [c for c in with_suggestion if "llm_suggested" in (c.get("original_flags") or [])]
         return {
             "reviewed": len(rows),
             "flagged_reviewed": len(flagged),
@@ -46,6 +52,8 @@ def summarize(corrections: list[dict]) -> dict:
             "suggestions_accepted": sum(1 for c in with_suggestion if c["action"] == "accept_suggestion"),
             "suggestion_accept_rate": _ratio(sum(1 for c in with_suggestion if c["action"] == "accept_suggestion"),
                                              len(with_suggestion)),
+            # model suggestions are not checked by arithmetic, so their acceptance rate is the honest measure of them
+            "suggestions_by_source": {"llm": source(llm), "arithmetic": source([c for c in with_suggestion if c not in llm])},
         }
 
     fields = sorted({c["field"] for c in items})
