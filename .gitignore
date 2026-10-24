@@ -12,3 +12,5 @@ data/calibration/
 data/ocr_cache/
 data/api/
 data/bench/
+web/node_modules/
+web/dist/

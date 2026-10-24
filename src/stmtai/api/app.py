@@ -10,6 +10,7 @@ Endpoints (all under the same origin; interactive docs at /docs):
     GET    /statements/{id}/review              only what needs a human, with reasons and suggestions
     GET    /statements/{id}/pages/{n}.png       page image to draw the boxes on
     POST   /statements/{id}/corrections         confirm / correct / accept a suggestion for one cell
+    POST   /statements/{id}/corrections/bulk    confirm a whole low-risk group at once (e.g. restored UPI prefixes)
     DELETE /statements/{id}/corrections/{cid}   undo
     POST   /statements/{id}/approve             sign off (refused while cells still need review)
     GET    /statements/{id}/export.csv|json     corrected data
@@ -47,6 +48,10 @@ class Settings:
     max_upload_mb: int = int(os.environ.get("STMTAI_MAX_UPLOAD_MB", "25"))
     cors_origins: list[str] = field(default_factory=lambda: [
         o for o in os.environ.get("STMTAI_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if o])
+
+
+class BulkIn(BaseModel):
+    group: str  # only groups marked "bulk" in the review response can be confirmed in one go
 
 
 class CorrectionIn(BaseModel):
@@ -88,9 +93,13 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         except Exception as exc:  # reported on the record, never swallowed
             store.set_failed(sid, f"{type(exc).__name__}: {exc}")
 
-    def summary_row(rec: dict) -> dict:
+    def summary_row(rec: dict, detail: bool = False) -> dict:
         out = {k: rec[k] for k in ("id", "filename", "status", "error", "created", "approved_at") if k in rec}
         out["approved"] = bool(rec.get("approved_at"))
+        if detail and rec.get("status") == "ready":
+            view = service.build_view(store.raw(rec["id"]), store.corrections(rec["id"]))
+            s = view.meta.get("summary", {})
+            out.update(rows=s.get("rows"), to_review=s.get("fields_to_review"), reconciles=s.get("reconciles"))
         return out
 
     @app.get("/health")
@@ -121,7 +130,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
 
     @app.get("/statements", dependencies=[Depends(auth)])
     def list_statements() -> list[dict]:
-        return [summary_row(r) for r in store.list()]
+        return [summary_row(r, detail=True) for r in store.list()]
 
     @app.get("/statements/{sid}", dependencies=[Depends(auth)])
     def get_statement(sid: str) -> dict:
@@ -143,7 +152,8 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         _, raw = ready_or_409(sid)
         view = service.build_view(raw, store.corrections(sid))
         items = service.review_queue(view, order)
-        return {"count": len(items), "items": items, "reconciles": view.meta["summary"]["reconciles"]}
+        return {"count": len(items), "items": items, "groups": service.groups_summary(items),
+                "reconciles": view.meta["summary"]["reconciles"]}
 
     @app.get("/statements/{sid}/pages/{page}.png", dependencies=[Depends(auth)], response_model=None)
     def page_image(sid: str, page: int, dpi: int = Query(110, ge=50, le=220)) -> FileResponse:
@@ -193,6 +203,29 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             new_value=new_value)
         after = service.build_view(raw, store.corrections(sid))
         return {"id": cid, "remaining_to_review": after.meta["summary"]["fields_to_review"],
+                "reconciles": after.meta["summary"]["reconciles"]}
+
+    @app.post("/statements/{sid}/corrections/bulk", status_code=201, dependencies=[Depends(auth)])
+    def confirm_group(sid: str, body: BulkIn) -> dict:
+        """Confirm every cell in a low-risk group at once. Each cell still gets its own log row, so the
+        feedback metrics see 24 confirmations, not one."""
+        rec, raw = ready_or_409(sid)
+        if rec["approved_at"]:
+            raise HTTPException(409, "Statement is approved. Reopen it to change it.")
+        group = next((g for g in service.GROUPS if g["id"] == body.group), None)
+        if group is None:
+            raise HTTPException(404, "No such group.")
+        if not group["bulk"]:
+            raise HTTPException(422, f"'{group['label']}' needs a look at each item and cannot be confirmed in bulk.")
+        view, _ = apply_corrections(raw, store.corrections(sid))
+        items = [i for i in service.review_queue(view) if i["group"] == body.group]
+        ids = []
+        for i in items:
+            fv = locate(view, i["row"], i["field"])
+            ids.append(store.add_correction(sid, i["row"], i["field"], "confirm", fv.value, fv.confidence, fv.flags,
+                                            was_flagged=True, had_suggestion=fv.suggestion is not None, new_value=None))
+        after = service.build_view(raw, store.corrections(sid))
+        return {"confirmed": len(items), "ids": ids, "remaining_to_review": after.meta["summary"]["fields_to_review"],
                 "reconciles": after.meta["summary"]["reconciles"]}
 
     @app.get("/statements/{sid}/corrections", dependencies=[Depends(auth)])

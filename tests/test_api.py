@@ -75,7 +75,9 @@ def test_upload_extracts_and_serializes(tmp_path, data):
     assert body["pages"][0]["width"] > 0 and body["pages"][0]["image"].endswith("/pages/0.png")
     assert body["summary"]["reconciles"] is True and body["summary"]["fields_to_review"] == 0
     assert client.get(f"/statements/{sid}/review").json()["count"] == 0
-    assert [s["id"] for s in client.get("/statements").json()] == [sid]
+    listed = client.get("/statements").json()
+    assert [s["id"] for s in listed] == [sid]
+    assert listed[0]["rows"] == len(label.statement.transactions) and listed[0]["to_review"] == 0 and listed[0]["reconciles"]
 
 
 def test_page_image_is_a_png(tmp_path, data):
@@ -273,3 +275,48 @@ def test_coerce_value(field, text, expected):
 def test_coerce_value_rejects(field, text):
     with pytest.raises(ValueError):
         coerce_value(field, text)
+
+
+# ----------------------------------------------------------------------------- groups and bulk confirm
+def _damage_prefixes(raw):
+    for t in raw.transactions[:6]:
+        d = t.fields.get("description")
+        if d is not None:
+            d.confidence = 0.7
+            d.flags = ["prefix_snapped", "reference_matches"]
+
+
+def test_review_items_carry_groups_and_a_summary(tmp_path, data):
+    _, pdf, _ = _doc(data)
+    client, store = make_client(tmp_path)
+    sid = seed_broken(client, store, pdf, _break_balance)
+    review = client.get(f"/statements/{sid}/review").json()
+    assert {i["group"] for i in review["items"]} <= {"chain", "repaired", "prefix", "header", "other"}
+    groups = {g["id"]: g for g in review["groups"]}
+    assert groups["chain"]["count"] >= 1 and groups["chain"]["bulk"] is False and groups["prefix"]["bulk"] is True
+    assert sum(g["count"] for g in review["groups"]) == review["count"]
+
+
+def test_bulk_confirm_clears_a_safe_group_and_logs_each_cell(tmp_path, data):
+    _, pdf, _ = _doc(data)
+    client, store = make_client(tmp_path)
+    sid = seed_broken(client, store, pdf, lambda raw: (_break_balance(raw), _damage_prefixes(raw)))
+    before = client.get(f"/statements/{sid}/review").json()
+    n = next(g["count"] for g in before["groups"] if g["id"] == "prefix")
+    assert n >= 1
+    r = client.post(f"/statements/{sid}/corrections/bulk", json={"group": "prefix"})
+    assert r.status_code == 201 and r.json()["confirmed"] == n and len(r.json()["ids"]) == n
+    after = client.get(f"/statements/{sid}/review").json()
+    assert next(g["count"] for g in after["groups"] if g["id"] == "prefix") == 0
+    assert after["count"] == before["count"] - n
+    assert len(client.get(f"/statements/{sid}/corrections").json()) == n
+    assert client.get("/feedback").json()["overall"]["reviewed"] == n
+
+
+def test_bulk_confirm_refuses_risky_or_unknown_groups(tmp_path, data):
+    _, pdf, _ = _doc(data)
+    client, store = make_client(tmp_path)
+    sid = seed_broken(client, store, pdf, _break_balance)
+    assert client.post(f"/statements/{sid}/corrections/bulk", json={"group": "chain"}).status_code == 422
+    assert client.post(f"/statements/{sid}/corrections/bulk", json={"group": "nope"}).status_code == 404
+    assert client.get(f"/statements/{sid}/review").json()["count"] >= 1  # nothing was confirmed

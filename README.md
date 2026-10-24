@@ -3,9 +3,9 @@
 Extract transactions from bank statements (digital PDFs and messy scans), score how much to trust
 every field, and send only the uncertain ones to a human reviewer. Corrections feed an evaluation loop.
 
-> **Status:** steps 1-5 of 7 complete: synthetic data with ground truth, digital-PDF and scan extraction,
-> reconciliation-based confidence scoring, an evaluation harness, an OCR engine benchmark and an HTTP API
-> with a review workflow. The React review UI is next.
+> **Status:** steps 1-6 of 7 complete: synthetic data with ground truth, digital-PDF and scan extraction,
+> reconciliation-based confidence scoring, an evaluation harness, an OCR engine benchmark, an HTTP API
+> and a React review screen. LLM fallback, natural-language queries and Docker are next.
 
 All data in this repository is **synthetic**. Banks, people, accounts and IFSC codes are fictional,
 and every generated page is stamped as a sample. No real customer data is used or needed.
@@ -129,7 +129,8 @@ python -m stmtai.api                      # http://127.0.0.1:8000, interactive d
 |---|---|
 | `POST /statements` | Upload a PDF. Returns `202` at once; extraction (and OCR for scans) runs in the background. |
 | `GET /statements/{id}` | Status, page sizes, every field with value, confidence, flags, bounding box and suggestion. |
-| `GET /statements/{id}/review` | Only the fields that need a human, each with plain-language reasons. `?order=confidence` for worst first. |
+| `GET /statements/{id}/review` | Only the fields that need a human, each with plain-language reasons and a group. `?order=confidence` for worst first. |
+| `POST /statements/{id}/corrections/bulk` | Confirm a whole low-risk group at once. Risky groups are refused. |
 | `GET /statements/{id}/pages/{n}.png` | The page image the boxes are drawn on. |
 | `POST /statements/{id}/corrections` | `confirm`, `correct` (with a value) or `accept_suggestion` for one cell. Returns how many cells still need review. |
 | `DELETE /statements/{id}/corrections/{cid}` | Undo. |
@@ -154,6 +155,36 @@ Design decisions worth knowing:
 Limitations, stated plainly: extraction runs in a background thread of one process (fine for a demo or a
 small team, not a queue for thousands of documents); a row the OCR dropped entirely can be detected but not
 inserted yet; there is no user model, so corrections are not attributed to a person.
+
+## The review screen (step 6)
+
+![Review screen](docs/review-screen.jpg)
+
+```bash
+python -m stmtai.api            # terminal 1: the API on :8000
+cd web && npm install && npm run dev      # terminal 2: the UI on http://localhost:5173
+```
+
+What the screen is built around: a reviewer should spend their time on the cells that are actually in doubt,
+and should never have to work out *why* a cell is flagged.
+
+- **The page with boxes** (red: breaks the balance, yellow: needs a look, green: checked) scrolls to the
+  selected cell. A strip down the left shows the balance chain, one mark per row, so a break is visible at a glance.
+- **One cell at a time**, with the scan enlarged next to what the OCR read, the suggested value, and the sum
+  behind it: *previous balance + this credit = suggested; the next row agrees.* The reviewer is checking
+  arithmetic against the page, not trusting a model.
+- **Grouped queue, worst first.** Balance breaks come first because fixing one often clears other flags.
+  Low-risk groups, such as 24 restored `UPI/` prefixes whose digits match the reference column, get **Confirm all**,
+  and each cell is still logged separately so the feedback metrics stay honest.
+- **Keyboard first:** Enter accepts, E edits, K keeps, arrows move, U undoes. Every action can be undone.
+- **Approve is locked until the queue is empty**; approved statements are frozen until reopened.
+
+Verified two ways: 12 unit tests for the arithmetic, queue ordering and geometry (`npm test`), and an
+end-to-end run in a real browser against the real API (`node web/e2e/smoke.mjs <scan.pdf>`) that uploads a
+scan, accepts a suggestion, undoes it, bulk-confirms, rejects bad input, works the queue to zero, approves and
+exports.
+
+Not built yet: inserting a row the OCR dropped, per-user accounts, and drawing a box to re-read a region.
 
 ## How confidence works
 
@@ -241,7 +272,7 @@ whether that held.
 3. [x] Scan path: deskew, OCR with confidence, tolerant table reconstruction, calibration
 4. [~] Benchmark OCR engines on the same labelled scans (RapidOCR, Tesseract done; Unlimited-OCR notebook ready, not yet run)
 5. [x] FastAPI service: upload, review queue, corrections with undo, approval, export, feedback metrics
-6. [ ] React review UI (page image with boxes, editable table, low-confidence cells highlighted)
+6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
 7. [ ] LLM fallback for messy rows, natural-language query layer, Docker, demo video
 
 ## Layout of the repo
@@ -264,8 +295,9 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             156 tests, including negative controls for the evaluator itself
+tests/             159 Python tests (plus 12 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
+web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines
 reports/           committed output of the evaluation and robustness runs
 ```

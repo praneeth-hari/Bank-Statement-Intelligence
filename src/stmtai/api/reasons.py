@@ -23,7 +23,8 @@ INFORMATIONAL = {"chain_verified", "date_order_verified", "value_date_consistent
 
 
 def reasons_for(flags: list[str], confidence: float, source: str = "") -> list[str]:
-    out = [FLAG_REASONS[f] for f in flags if f in FLAG_REASONS and (f not in INFORMATIONAL or f == "suggestion_verified")]
+    """Most serious reason first (the order of FLAG_REASONS). Informational flags are not reasons to look."""
+    out = [FLAG_REASONS[f] for f in FLAG_REASONS if f in flags and f not in INFORMATIONAL]
     if not out:
         out = ["The OCR engine was not confident about this text." if source == "ocr"
                else "The extractor was not confident about this value."]

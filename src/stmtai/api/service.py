@@ -159,6 +159,33 @@ def statement_json(ext: ExtractedStatement) -> dict:
     }
 
 
+# id, label, hint, safe to confirm in one click. Order is the order a reviewer should work in:
+# fixing a balance can clear other flags, so those come first.
+GROUPS: list[dict] = [
+    {"id": "chain", "label": "Balance does not add up", "hint": "Fix these first. They may clear other flags.", "bulk": False},
+    {"id": "repaired", "label": "Date or amount repaired", "hint": "Scan damage fixed automatically.", "bulk": False},
+    {"id": "prefix", "label": "Payment prefix restored, digits match", "hint": "UPI/ or IMPS/ rebuilt; the reference column agrees.", "bulk": True},
+    {"id": "header", "label": "Account details", "hint": "Name, number, IFSC, period.", "bulk": False},
+    {"id": "other", "label": "Other low-confidence text", "hint": "The scan was hard to read here.", "bulk": False},
+]
+
+
+def group_of(row: Optional[int], field: str, flags: list[str]) -> str:
+    if "balance_chain_break" in flags or "closing_mismatch" in flags:
+        return "chain"
+    if row is None:
+        return "header"
+    if "prefix_snapped" in flags and "reference_matches" in flags:
+        return "prefix"
+    if "ocr_repaired" in flags and field in ("date", "value_date", "debit", "credit", "balance"):
+        return "repaired"
+    return "other"
+
+
+def groups_summary(items: list[dict]) -> list[dict]:
+    return [{**g, "count": sum(1 for i in items if i["group"] == g["id"])} for g in GROUPS]
+
+
 def review_queue(ext: ExtractedStatement, order: str = "document") -> list[dict]:
     items = []
     for row, field, conf, flags in review_items(ext):
@@ -170,6 +197,7 @@ def review_queue(ext: ExtractedStatement, order: str = "document") -> list[dict]
             "reasons": reasons_for(flags, conf, fv.source), "suggestion": to_json(fv.suggestion),
             "suggestion_verified": "suggestion_verified" in flags,
             "bbox": fv.bbox.model_dump() if fv.bbox else None,
+            "group": group_of(row, field, flags),
         })
     if order == "confidence":
         items.sort(key=lambda x: x["confidence"])
