@@ -241,9 +241,26 @@ too, flagged `rule_suggested` and checked by the same validators.
 `python -m stmtai.llm.evaluate --no-model` scores the rules alone (no Ollama needed); without the flag the
 report splits rule fixes from model fixes, so the model has to earn its place.
 
+**Second and third runs: what was measured, and what it means.**
+
+| run | cells asked | wrong before | fixed by rules | fixed by the model | correct cells put at risk |
+|---|---|---|---|---|---|
+| 12 medium scans, rules written after reading their errors (so in-sample) | 15 | 8 | 8 | 0 | 0 |
+| 8 held-out medium scans (new seed), local OCR | 4 | 1 | 0 | 0 | 0 |
+| same held-out kind of data, a noisier OCR build | 199 | 25 | 7 | not run | 0 |
+
+Read this plainly. The rules are safe (nothing correct was ever made worse) and exact where they apply, but the
+100% in the first row is in-sample and says little. On held-out data the local OCR output was clean enough that
+almost nothing needed a text suggestion, and on the noisier OCR build the rules fixed all the dates but only
+about one in five wrong descriptions; the rest are letters the OCR dropped outright (`WRIDESHVALA`), which no
+text rule can restore. **The 3B model, reading text alone, fixed nothing beyond the rules in any run**, so the
+fallback stays **off by default** (`STMTAI_LLM` unset) and is kept as a measured, optional component rather than
+a claimed improvement. The harness that produced this finding is the useful part: it will show immediately if
+a larger model, or a vision model that rereads the cell image, does better.
+
 Limits, stated plainly: a wrong one-letter edit that keeps the digits and the prefix passes every check, so
-the reviewer is still the safety net and the accept rate is the metric to watch. The sample above is small
-(15 cells); treat it as a first reading, not a benchmark. Letters the OCR dropped entirely
+the reviewer is still the safety net and the accept rate is the metric to watch. Heavy scans fail earlier than
+this step (no table is found), so neither rules nor a text model reach them. Letters the OCR dropped entirely
 (`WRIDESHVALA`) are beyond both rules and a 3B model reading text alone; reading the pixels again with a vision
 model is the next thing to try.
 
@@ -336,7 +353,7 @@ whether that held.
 4. [x] Benchmark OCR engines on the same labelled scans: RapidOCR and Tesseract scored; Unlimited-OCR run on Colab but not scored (see the benchmark section)
 5. [x] FastAPI service: upload, review queue, corrections with undo, approval, export, feedback metrics
 6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
-7. [x] LLM fallback with Ollama: proposals checked against the document, own review group, accept rate in `/feedback`
+7. [x] Text and date suggestions: exact rules plus an optional Ollama fallback, both checked against the document, with an evaluation harness. Measured result: the rules help, the 3B text model adds nothing yet (off by default)
 8. [ ] Natural-language query layer over approved statements
 9. [ ] Docker and a demo video
 
