@@ -200,6 +200,38 @@ def test_model_down_never_breaks_the_rules_path():
     assert not res.answered and res.reason
 
 
+# The six wrong readings llama3.1:8b produced when it parsed the evaluation questions on its own.
+OBSERVED_WRONG_READINGS = [
+    ("What is my average UPI payment?", {"answerable": True, "aggregate": "avg", "measure": "credit", "categories": ["upi"]}),
+    ("What is my average IMPS payment?", {"answerable": True, "aggregate": "avg", "measure": "credit", "categories": ["imps"]}),
+    ("Show my 3 largest debits", {"answerable": True, "aggregate": "max", "measure": "debit"}),
+    ("How many payments over 1000?", {"answerable": True, "aggregate": "count", "measure": "net", "min_amount": "1000"}),
+    ("How often did I pay 2000 or more?", {"answerable": True, "aggregate": "count", "measure": "debit",
+                                            "min_amount": "2000", "max_amount": "2000"}),
+    ("How often did I pay 5000 or more?", {"answerable": True, "aggregate": "count", "measure": "debit"}),
+]
+
+
+@pytest.mark.parametrize("question,reply", OBSERVED_WRONG_READINGS)
+def test_a_model_reading_that_contradicts_the_question_is_rejected(question, reply):
+    with FakeOllama(lambda s, u, sc: reply) as srv:
+        res = ask(question, ROWS, client=client_for(srv), mode="model")
+    assert not res.answered and "rejected" in res.reason
+
+
+@pytest.mark.parametrize("question,reply", [
+    ("What is my average UPI payment?", {"answerable": True, "aggregate": "avg", "measure": "debit", "categories": ["upi"]}),
+    ("Show my 3 largest debits", {"answerable": True, "aggregate": "list", "measure": "debit", "limit": 3}),
+    ("How many payments over 1000?", {"answerable": True, "aggregate": "count", "measure": "debit", "min_amount": "1000"}),
+    ("How often did I pay 2000 or more?", {"answerable": True, "aggregate": "count", "measure": "debit", "min_amount": "2000"}),
+    ("outlay on cash machines, please", {"answerable": True, "aggregate": "sum", "measure": "debit", "categories": ["atm"]}),
+])
+def test_the_reading_check_lets_correct_model_readings_through(question, reply):
+    with FakeOllama(lambda s, u, sc: reply) as srv:
+        res = ask(question, ROWS, client=client_for(srv), mode="model")
+    assert res.answered and res.parser == "model"
+
+
 # ----------------------------------------------------------------------------- the evaluation harness
 @pytest.fixture(scope="module")
 def data(tmp_path_factory):

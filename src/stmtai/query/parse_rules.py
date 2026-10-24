@@ -39,6 +39,25 @@ CATEGORY_WORDS = {
 }
 
 
+CREDIT_WORDS = re.compile(r"\b(received|receive|credited|credits?|deposits?|deposited|income|earned|earn|incoming|inflows?|refunds?|salary|"
+                          r"salaries|payroll)\b|\bmoney (?:come|came|coming|comes|going) in(?:to)?\b|\bcame in\b|\bcoming in\b")
+DEBIT_WORDS = re.compile(r"\b(spent|spend|spending|paid|pay|payments?|debits?|debited|withdrew|withdrawals?|expenses?|outgoing|outgoings?|"
+                         r"outflows?|costs?|cost|bought|purchases?|charged|expensive)\b|\bmoney (?:went|going|leaving|left) out\b")
+TOP_N = re.compile(r"\btop (\d+)\b|\b(\d+) (?:largest|biggest|highest|smallest|lowest|most expensive)\b|\bfirst (\d+)\b|"
+                   r"\b(?:which|show|list|name|give me|what are)(?: me)?(?: the)? (\d+)\b(?! ?(?:of|days?|months?))")
+
+
+def top_n(q: str) -> Optional[int]:
+    m = TOP_N.search(q)
+    return int(next(g for g in m.groups() if g)) if m else None
+
+
+def normalise(question: str) -> str:
+    q = " " + re.sub(r"[?!]", " ", question.lower()).replace("’", "'") + " "
+    q = re.sub(r"\s+", " ", q)
+    return re.sub(r"\b(one|two|three|four|five|six|seven|eight|nine|ten)\b", lambda m: str(NUMBER_WORDS[m[1]]), q)
+
+
 @dataclass
 class Parsed:
     query: Optional[Query] = None
@@ -186,24 +205,20 @@ def _unused_numbers(q: str, lo: Optional[Decimal], hi: Optional[Decimal], limit:
 
 
 def parse(question: str, rows: list[Row], today: Optional[dt.date] = None) -> Parsed:
-    q = " " + re.sub(r"[?!]", " ", question.lower()).replace("’", "'") + " "
-    q = re.sub(r"\s+", " ", q)
-    q = re.sub(r"\b(one|two|three|four|five|six|seven|eight|nine|ten)\b", lambda m: str(NUMBER_WORDS[m[1]]), q)
+    q = normalise(question)
     if UNSUPPORTED.search(q):
         return Parsed(reason="That is not a question about the transactions.")
     today = today or (max((r.date for r in rows), default=dt.date.today()))
     notes: list[str] = []
 
     # ---- what to compute
-    top = re.search(r"\btop (\d+)\b|\b(\d+) (?:largest|biggest|highest|smallest|lowest|most expensive)\b|\bfirst (\d+)\b|"
-                    r"\b(?:which|show|list|name|give me|what are)(?: me)?(?: the)? (\d+)\b(?! ?(?:of|days?|months?))", q)
-    limit = int(next(g for g in top.groups() if g)) if top else 10
+    n_top = top_n(q)
+    top = n_top is not None
+    limit = n_top if top else 10
     asc = bool(re.search(r"\b(smallest|lowest|least|cheapest|minimum|min)\b", q))
 
-    credit_w = re.search(r"\b(received|receive|credited|credits?|deposits?|deposited|income|earned|earn|incoming|inflows?|refunds?|salary|"
-                         r"salaries|payroll)\b|\bmoney (?:come|came|coming|comes|going) in(?:to)?\b|\bcame in\b|\bcoming in\b", q)
-    debit_w = re.search(r"\b(spent|spend|spending|paid|pay|payments?|debits?|debited|withdrew|withdrawals?|expenses?|outgoing|outgoings?|"
-                        r"outflows?|costs?|cost|bought|purchases?|charged|expensive)\b|\bmoney (?:went|going|leaving|left) out\b", q)
+    credit_w = CREDIT_WORDS.search(q)
+    debit_w = DEBIT_WORDS.search(q)
     net_w = re.search(r"\b(net|saved|savings|difference|net change|cash ?flow)\b", q)
     balance_w = re.search(r"\bbalance\b", q)
 

@@ -8,6 +8,7 @@ answer in a fixed JSON shape, and may say the question cannot be answered. Anyth
 from __future__ import annotations
 
 import datetime as dt
+import re
 from collections import Counter
 from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
@@ -15,7 +16,7 @@ from typing import Any, Optional
 from ..llm.client import LLMUnavailable
 from .data import Row
 from .model import CATEGORIES, Query
-from .parse_rules import Parsed
+from .parse_rules import CREDIT_WORDS, DEBIT_WORDS, Parsed, _unused_numbers, normalise, top_n
 
 SCHEMA = {
     "type": "object",
@@ -76,6 +77,31 @@ def to_query(obj: dict[str, Any]) -> Query:
         group_by=obj.get("group_by") or None, limit=int(obj.get("limit") or 10), order=obj.get("order") or "desc")
 
 
+def check_reading(question: str, query: Query) -> Optional[str]:
+    """Reject a model query that contradicts the question's own words. The model proposes; the question has the last word.
+
+    Every check is a plain contradiction, so a correct reading is never refused for merely being unusual: the wrong
+    direction of money, a number in the question that the query does not use, or a bound nobody asked for.
+    """
+    q = normalise(question)
+    credit, debit = bool(CREDIT_WORDS.search(q)), bool(DEBIT_WORDS.search(q))
+    if query.measure == "credit" and not credit and "salary" not in query.categories and "interest" not in query.categories:
+        return "it read the question as money received, but the question never says so"
+    if query.measure == "debit" and credit and not debit:
+        return "it read the question as money spent, but the question is about money received"
+    if query.measure == "net" and query.aggregate in ("count", "list", "sum", "avg", "max", "min") and (credit != debit):
+        return "it counted every transaction, but the question names only " + ("credits" if credit else "payments")
+    n = top_n(q)
+    if n is not None and not query.group_by and (query.aggregate != "list" or query.limit != n):
+        return f"the question asks for {n} items but the query does not return exactly {n}"
+    if query.min_amount is not None and query.min_amount == query.max_amount and not re.search(r"\b(exactly|equal|equals|precisely)\b", q):
+        return "it set the same amount as both minimum and maximum, which the question does not ask for"
+    stray = _unused_numbers(q, query.min_amount, query.max_amount, query.limit)
+    if stray:
+        return f"the number {stray[0]} in the question is not used by the query"
+    return None
+
+
 def parse(question: str, rows: list[Row], client, today: Optional[dt.date] = None) -> Parsed:
     today = today or max((r.date for r in rows), default=dt.date.today())
     years = sorted({r.date.year for r in rows})
@@ -92,6 +118,10 @@ def parse(question: str, rows: list[Row], client, today: Optional[dt.date] = Non
     if "aggregate" not in reply:
         return Parsed(reason="The model did not say what to compute.")
     try:
-        return Parsed(query=to_query(reply))
+        query = to_query(reply)
     except (ValueError, TypeError, KeyError) as exc:
         return Parsed(reason=f"The model's query was not valid ({exc}).")
+    problem = check_reading(question, query)
+    if problem:
+        return Parsed(reason=f"I could not read that reliably: the language model's reading was rejected because {problem}.")
+    return Parsed(query=query)
