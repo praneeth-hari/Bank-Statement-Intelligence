@@ -1,0 +1,388 @@
+{
+  "doc_id": "wrapped_two_date_00",
+  "layout": "wrapped_two_date",
+  "seed": 3042,
+  "fields_present": [
+    "date",
+    "value_date",
+    "description",
+    "ref",
+    "debit",
+    "credit",
+    "balance"
+  ],
+  "statement": {
+    "bank_name": "Nila Digital Bank",
+    "account_holder": "AYAAN BARAD",
+    "account_number": "40699039122270",
+    "ifsc": "NDBS0778638",
+    "branch": "GUNTAKAL MAIN BRANCH",
+    "currency": "INR",
+    "period_start": "2026-04-01",
+    "period_end": "2026-04-30",
+    "opening_balance": "64340.28",
+    "closing_balance": "123814.48",
+    "transactions": [
+      {
+        "date": "2026-04-01",
+        "value_date": "2026-04-01",
+        "description": "UPI/594255365518/AIRTEL PAYMENTS",
+        "ref": "594255365518",
+        "debit": "6031.93",
+        "credit": null,
+        "balance": "58308.35"
+      },
+      {
+        "date": "2026-04-01",
+        "value_date": "2026-04-01",
+        "description": "UPI/635900921963/BIGBASKET",
+        "ref": "635900921963",
+        "debit": "6030.00",
+        "credit": null,
+        "balance": "52278.35"
+      },
+      {
+        "date": "2026-04-02",
+        "value_date": "2026-04-02",
+        "description": "NEFT-N206710900059810-HELIX SYSTEMS INDIA-SALARY",
+        "ref": "N206710900059810",
+        "debit": null,
+        "credit": "129730.00",
+        "balance": "182008.35"
+      },
+      {
+        "date": "2026-04-02",
+        "value_date": "2026-04-02",
+        "description": "POS SWIGGY MUZAFFARPUR",
+        "ref": null,
+        "debit": "6230.00",
+        "credit": null,
+        "balance": "175778.35"
+      },
+      {
+        "date": "2026-04-03",
+        "value_date": "2026-04-03",
+        "description": "UPI/996227919515/HIRAL THAKKAR",
+        "ref": "996227919515",
+        "debit": "5060.00",
+        "credit": null,
+        "balance": "170718.35"
+      },
+      {
+        "date": "2026-04-03",
+        "value_date": "2026-04-03",
+        "description": "POS ZOMATO SURYAPET",
+        "ref": null,
+        "debit": "250.67",
+        "credit": null,
+        "balance": "170467.68"
+      },
+      {
+        "date": "2026-04-04",
+        "value_date": "2026-04-04",
+        "description": "UPI/477024293719/BOOKMYSHOW",
+        "ref": "477024293719",
+        "debit": "1619.69",
+        "credit": null,
+        "balance": "168847.99"
+      },
+      {
+        "date": "2026-04-05",
+        "value_date": "2026-04-05",
+        "description": "UPI/839920159211/BOOKMYSHOW",
+        "ref": "839920159211",
+        "debit": "5048.06",
+        "credit": null,
+        "balance": "163799.93"
+      },
+      {
+        "date": "2026-04-06",
+        "value_date": "2026-04-06",
+        "description": "UPI/980861447473/BIGBASKET",
+        "ref": "980861447473",
+        "debit": "2208.05",
+        "credit": null,
+        "balance": "161591.88"
+      },
+      {
+        "date": "2026-04-07",
+        "value_date": "2026-04-07",
+        "description": "UPI/617573085465/AMOL SEKHON",
+        "ref": "617573085465",
+        "debit": "2670.00",
+        "credit": null,
+        "balance": "158921.88"
+      },
+      {
+        "date": "2026-04-09",
+        "value_date": "2026-04-09",
+        "description": "UPI/594596918006/ZEPTO",
+        "ref": "594596918006",
+        "debit": "3343.80",
+        "credit": null,
+        "balance": "155578.08"
+      },
+      {
+        "date": "2026-04-10",
+        "value_date": "2026-04-10",
+        "description": "ECS/EMI HOME LOAN LN78870873",
+        "ref": "LN78870873",
+        "debit": "18540.00",
+        "credit": null,
+        "balance": "137038.08"
+      },
+      {
+        "date": "2026-04-10",
+        "value_date": "2026-04-10",
+        "description": "UPI/976016068599/OMYA DUBEY",
+        "ref": "976016068599",
+        "debit": null,
+        "credit": "4406.90",
+        "balance": "141444.98"
+      },
+      {
+        "date": "2026-04-11",
+        "value_date": "2026-04-11",
+        "description": "UPI/461144126192/SACHI SODHI",
+        "ref": "461144126192",
+        "debit": "143.11",
+        "credit": null,
+        "balance": "141301.87"
+      },
+      {
+        "date": "2026-04-11",
+        "value_date": "2026-04-11",
+        "description": "UPI/910370703819/AMAZON PAY",
+        "ref": "910370703819",
+        "debit": "4120.00",
+        "credit": null,
+        "balance": "137181.87"
+      },
+      {
+        "date": "2026-04-12",
+        "value_date": "2026-04-12",
+        "description": "ATM WDL 792166 MUNGER",
+        "ref": null,
+        "debit": "3000.00",
+        "credit": null,
+        "balance": "134181.87"
+      },
+      {
+        "date": "2026-04-13",
+        "value_date": "2026-04-13",
+        "description": "UPI/903501029393/AMAZON PAY",
+        "ref": "903501029393",
+        "debit": "6412.75",
+        "credit": null,
+        "balance": "127769.12"
+      },
+      {
+        "date": "2026-04-14",
+        "value_date": "2026-04-14",
+        "description": "UPI/157162811258/NETFLIX",
+        "ref": "157162811258",
+        "debit": "2762.78",
+        "credit": null,
+        "balance": "125006.34"
+      },
+      {
+        "date": "2026-04-14",
+        "value_date": "2026-04-14",
+        "description": "UPI/543469276008/MYNTRA",
+        "ref": "543469276008",
+        "debit": "500.00",
+        "credit": null,
+        "balance": "124506.34"
+      },
+      {
+        "date": "2026-04-14",
+        "value_date": "2026-04-14",
+        "description": "IMPS/788822942500/HEMA PERI",
+        "ref": "788822942500",
+        "debit": null,
+        "credit": "18361.97",
+        "balance": "142868.31"
+      },
+      {
+        "date": "2026-04-15",
+        "value_date": "2026-04-15",
+        "description": "GST ON SERVICE CHARGES",
+        "ref": null,
+        "debit": "11.80",
+        "credit": null,
+        "balance": "142856.51"
+      },
+      {
+        "date": "2026-04-16",
+        "value_date": "2026-04-16",
+        "description": "UPI/147733451770/BLINKIT",
+        "ref": "147733451770",
+        "debit": "84.51",
+        "credit": null,
+        "balance": "142772.00"
+      },
+      {
+        "date": "2026-04-16",
+        "value_date": "2026-04-16",
+        "description": "UPI/027233832925/FLIPKART",
+        "ref": "027233832925",
+        "debit": "308.01",
+        "credit": null,
+        "balance": "142463.99"
+      },
+      {
+        "date": "2026-04-17",
+        "value_date": "2026-04-17",
+        "description": "UPI/546069303563/PHARMEASY",
+        "ref": "546069303563",
+        "debit": "6193.96",
+        "credit": null,
+        "balance": "136270.03"
+      },
+      {
+        "date": "2026-04-18",
+        "value_date": "2026-04-18",
+        "description": "UPI/520950743748/VASANA PADMANABHAN",
+        "ref": "520950743748",
+        "debit": "5174.25",
+        "credit": null,
+        "balance": "131095.78"
+      },
+      {
+        "date": "2026-04-18",
+        "value_date": "2026-04-18",
+        "description": "UPI/060479635422/UPMA EDWIN",
+        "ref": "060479635422",
+        "debit": null,
+        "credit": "2874.76",
+        "balance": "133970.54"
+      },
+      {
+        "date": "2026-04-19",
+        "value_date": "2026-04-19",
+        "description": "UPI/063014857683/RELIANCE SMART",
+        "ref": "063014857683",
+        "debit": "2380.00",
+        "credit": null,
+        "balance": "131590.54"
+      },
+      {
+        "date": "2026-04-19",
+        "value_date": "2026-04-19",
+        "description": "UPI/472269240192/YAMINI SHAN",
+        "ref": "472269240192",
+        "debit": null,
+        "credit": "4640.00",
+        "balance": "136230.54"
+      },
+      {
+        "date": "2026-04-20",
+        "value_date": "2026-04-20",
+        "description": "POS BLINKIT HUBLI–DHARWAD",
+        "ref": null,
+        "debit": "5979.20",
+        "credit": null,
+        "balance": "130251.34"
+      },
+      {
+        "date": "2026-04-22",
+        "value_date": "2026-04-22",
+        "description": "UPI/150634581268/DHRUV CHAD",
+        "ref": "150634581268",
+        "debit": null,
+        "credit": "2960.00",
+        "balance": "133211.34"
+      },
+      {
+        "date": "2026-04-22",
+        "value_date": "2026-04-22",
+        "description": "UPI/928352231534/IRCTC",
+        "ref": "928352231534",
+        "debit": "3650.00",
+        "credit": null,
+        "balance": "129561.34"
+      },
+      {
+        "date": "2026-04-23",
+        "value_date": "2026-04-23",
+        "description": "POS ZOMATO PIMPRI-CHINCHWAD",
+        "ref": null,
+        "debit": "313.26",
+        "credit": null,
+        "balance": "129248.08"
+      },
+      {
+        "date": "2026-04-25",
+        "value_date": "2026-04-25",
+        "description": "UPI/474521298834/YASH BAHRI",
+        "ref": "474521298834",
+        "debit": "4372.62",
+        "credit": null,
+        "balance": "124875.46"
+      },
+      {
+        "date": "2026-04-26",
+        "value_date": "2026-04-26",
+        "description": "IMPS/979957002084/SANYA SANI",
+        "ref": "979957002084",
+        "debit": null,
+        "credit": "2940.00",
+        "balance": "127815.46"
+      },
+      {
+        "date": "2026-04-26",
+        "value_date": "2026-04-26",
+        "description": "UPI/298941014526/URISHILLA MENON",
+        "ref": "298941014526",
+        "debit": null,
+        "credit": "5668.97",
+        "balance": "133484.43"
+      },
+      {
+        "date": "2026-04-27",
+        "value_date": "2026-04-27",
+        "description": "UPI/468538331406/MYNTRA",
+        "ref": "468538331406",
+        "debit": "3329.48",
+        "credit": null,
+        "balance": "130154.95"
+      },
+      {
+        "date": "2026-04-28",
+        "value_date": "2026-04-28",
+        "description": "SAVINGS INTEREST CREDIT",
+        "ref": null,
+        "debit": null,
+        "credit": "60.04",
+        "balance": "130214.99"
+      },
+      {
+        "date": "2026-04-29",
+        "value_date": "2026-04-29",
+        "description": "UPI/278588945151/NICHOLAS SATHE",
+        "ref": "278588945151",
+        "debit": "5812.09",
+        "credit": null,
+        "balance": "124402.90"
+      },
+      {
+        "date": "2026-04-30",
+        "value_date": "2026-04-30",
+        "description": "UPI/638982848417/BLINKIT",
+        "ref": "638982848417",
+        "debit": "5220.00",
+        "credit": null,
+        "balance": "119182.90"
+      },
+      {
+        "date": "2026-04-30",
+        "value_date": "2026-04-30",
+        "description": "UPI/488762836459/OJASVI KANDA",
+        "ref": "488762836459",
+        "debit": null,
+        "credit": "4631.58",
+        "balance": "123814.48"
+      }
+    ]
+  }
+}

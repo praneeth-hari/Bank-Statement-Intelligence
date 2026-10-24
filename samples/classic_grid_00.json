@@ -1,0 +1,414 @@
+{
+  "doc_id": "classic_grid_00",
+  "layout": "classic_grid",
+  "seed": 42,
+  "fields_present": [
+    "date",
+    "description",
+    "ref",
+    "debit",
+    "credit",
+    "balance"
+  ],
+  "statement": {
+    "bank_name": "Zephyr Union Bank",
+    "account_holder": "KAMALA PANT",
+    "account_number": "24966319314",
+    "ifsc": "ZUBS0891597",
+    "branch": "SHIMOGA MAIN BRANCH",
+    "currency": "INR",
+    "period_start": "2025-04-01",
+    "period_end": "2025-04-30",
+    "opening_balance": "114964.36",
+    "closing_balance": "80305.69",
+    "transactions": [
+      {
+        "date": "2025-04-01",
+        "value_date": "2025-04-01",
+        "description": "NEFT-N724238849696532-ORBITAL SOFTWARE PVT LTD-SALARY",
+        "ref": "N724238849696532",
+        "debit": null,
+        "credit": "68680.00",
+        "balance": "183644.36"
+      },
+      {
+        "date": "2025-04-02",
+        "value_date": "2025-04-02",
+        "description": "POS FLIPKART NAGPUR",
+        "ref": null,
+        "debit": "1103.25",
+        "credit": null,
+        "balance": "182541.11"
+      },
+      {
+        "date": "2025-04-02",
+        "value_date": "2025-04-02",
+        "description": "UPI/691669784801/YASH KAPOOR",
+        "ref": "691669784801",
+        "debit": null,
+        "credit": "1702.65",
+        "balance": "184243.76"
+      },
+      {
+        "date": "2025-04-03",
+        "value_date": "2025-04-03",
+        "description": "UPI/514627048281/HARSH CHAHAL",
+        "ref": "514627048281",
+        "debit": "5650.54",
+        "credit": null,
+        "balance": "178593.22"
+      },
+      {
+        "date": "2025-04-03",
+        "value_date": "2025-04-03",
+        "description": "ATM WDL 893252 PATNA",
+        "ref": null,
+        "debit": "2000.00",
+        "credit": null,
+        "balance": "176593.22"
+      },
+      {
+        "date": "2025-04-03",
+        "value_date": "2025-04-03",
+        "description": "UPI/809570154303/GIRIK KAMDAR",
+        "ref": "809570154303",
+        "debit": null,
+        "credit": "5755.79",
+        "balance": "182349.01"
+      },
+      {
+        "date": "2025-04-03",
+        "value_date": "2025-04-03",
+        "description": "UPI/171822782489/IRCTC",
+        "ref": "171822782489",
+        "debit": "5969.16",
+        "credit": null,
+        "balance": "176379.85"
+      },
+      {
+        "date": "2025-04-05",
+        "value_date": "2025-04-05",
+        "description": "UPI/346578713315/MYNTRA",
+        "ref": "346578713315",
+        "debit": "5674.92",
+        "credit": null,
+        "balance": "170704.93"
+      },
+      {
+        "date": "2025-04-06",
+        "value_date": "2025-04-06",
+        "description": "UPI/010310518347/BIGBASKET",
+        "ref": "010310518347",
+        "debit": "2432.92",
+        "credit": null,
+        "balance": "168272.01"
+      },
+      {
+        "date": "2025-04-07",
+        "value_date": "2025-04-07",
+        "description": "POS PHARMEASY DIBRUGARH",
+        "ref": null,
+        "debit": "7734.90",
+        "credit": null,
+        "balance": "160537.11"
+      },
+      {
+        "date": "2025-04-08",
+        "value_date": "2025-04-08",
+        "description": "UPI/763116566701/SPOTIFY",
+        "ref": "763116566701",
+        "debit": "6062.01",
+        "credit": null,
+        "balance": "154475.10"
+      },
+      {
+        "date": "2025-04-09",
+        "value_date": "2025-04-09",
+        "description": "ECS/EMI HOME LOAN LN21819600",
+        "ref": "LN21819600",
+        "debit": "15540.00",
+        "credit": null,
+        "balance": "138935.10"
+      },
+      {
+        "date": "2025-04-09",
+        "value_date": "2025-04-09",
+        "description": "UPI/387262473178/MYNTRA",
+        "ref": "387262473178",
+        "debit": "1170.00",
+        "credit": null,
+        "balance": "137765.10"
+      },
+      {
+        "date": "2025-04-11",
+        "value_date": "2025-04-11",
+        "description": "ATM WDL 132677 KISHANGANJ",
+        "ref": null,
+        "debit": "500.00",
+        "credit": null,
+        "balance": "137265.10"
+      },
+      {
+        "date": "2025-04-11",
+        "value_date": "2025-04-11",
+        "description": "UPI/026064746872/IRCTC",
+        "ref": "026064746872",
+        "debit": "2261.30",
+        "credit": null,
+        "balance": "135003.80"
+      },
+      {
+        "date": "2025-04-12",
+        "value_date": "2025-04-12",
+        "description": "ATM WDL 980500 BONGAIGAON",
+        "ref": null,
+        "debit": "500.00",
+        "credit": null,
+        "balance": "134503.80"
+      },
+      {
+        "date": "2025-04-12",
+        "value_date": "2025-04-12",
+        "description": "UPI/820812191361/THOMAS SEN",
+        "ref": "820812191361",
+        "debit": "6145.54",
+        "credit": null,
+        "balance": "128358.26"
+      },
+      {
+        "date": "2025-04-13",
+        "value_date": "2025-04-13",
+        "description": "UPI/909169985435/DMART",
+        "ref": "909169985435",
+        "debit": "5990.00",
+        "credit": null,
+        "balance": "122368.26"
+      },
+      {
+        "date": "2025-04-14",
+        "value_date": "2025-04-14",
+        "description": "UPI/475107991183/BIGBASKET",
+        "ref": "475107991183",
+        "debit": "1392.35",
+        "credit": null,
+        "balance": "120975.91"
+      },
+      {
+        "date": "2025-04-14",
+        "value_date": "2025-04-14",
+        "description": "UPI/354278498084/ABEER DUTTA",
+        "ref": "354278498084",
+        "debit": "3679.62",
+        "credit": null,
+        "balance": "117296.29"
+      },
+      {
+        "date": "2025-04-16",
+        "value_date": "2025-04-16",
+        "description": "SMS ALERT CHARGES",
+        "ref": null,
+        "debit": "17.70",
+        "credit": null,
+        "balance": "117278.59"
+      },
+      {
+        "date": "2025-04-18",
+        "value_date": "2025-04-18",
+        "description": "UPI/182449353487/ZOMATO",
+        "ref": "182449353487",
+        "debit": "2790.00",
+        "credit": null,
+        "balance": "114488.59"
+      },
+      {
+        "date": "2025-04-18",
+        "value_date": "2025-04-18",
+        "description": "UPI/400524278680/BIGBASKET",
+        "ref": "400524278680",
+        "debit": "987.81",
+        "credit": null,
+        "balance": "113500.78"
+      },
+      {
+        "date": "2025-04-18",
+        "value_date": "2025-04-18",
+        "description": "UPI/598262045053/HARINI MALL",
+        "ref": "598262045053",
+        "debit": "5740.00",
+        "credit": null,
+        "balance": "107760.78"
+      },
+      {
+        "date": "2025-04-19",
+        "value_date": "2025-04-19",
+        "description": "UPI/869232260256/TANVEER NAYAR",
+        "ref": "869232260256",
+        "debit": "1100.00",
+        "credit": null,
+        "balance": "106660.78"
+      },
+      {
+        "date": "2025-04-20",
+        "value_date": "2025-04-20",
+        "description": "UPI/160733754330/GEORGE RAI",
+        "ref": "160733754330",
+        "debit": "2620.00",
+        "credit": null,
+        "balance": "104040.78"
+      },
+      {
+        "date": "2025-04-21",
+        "value_date": "2025-04-21",
+        "description": "UPI/145868501429/JAGRATI PADMANABHAN",
+        "ref": "145868501429",
+        "debit": null,
+        "credit": "4280.00",
+        "balance": "108320.78"
+      },
+      {
+        "date": "2025-04-22",
+        "value_date": "2025-04-22",
+        "description": "UPI/965569816934/RELIANCE SMART",
+        "ref": "965569816934",
+        "debit": "2800.00",
+        "credit": null,
+        "balance": "105520.78"
+      },
+      {
+        "date": "2025-04-23",
+        "value_date": "2025-04-23",
+        "description": "UPI/835615951484/CALEB SHARAF",
+        "ref": "835615951484",
+        "debit": "37.73",
+        "credit": null,
+        "balance": "105483.05"
+      },
+      {
+        "date": "2025-04-25",
+        "value_date": "2025-04-25",
+        "description": "UPI/482366299468/KRITIKA BRAR",
+        "ref": "482366299468",
+        "debit": "3440.27",
+        "credit": null,
+        "balance": "102042.78"
+      },
+      {
+        "date": "2025-04-25",
+        "value_date": "2025-04-25",
+        "description": "UPI/699577738721/SPOTIFY",
+        "ref": "699577738721",
+        "debit": "3210.00",
+        "credit": null,
+        "balance": "98832.78"
+      },
+      {
+        "date": "2025-04-25",
+        "value_date": "2025-04-25",
+        "description": "UPI/343320037917/PHARMEASY",
+        "ref": "343320037917",
+        "debit": "999.23",
+        "credit": null,
+        "balance": "97833.55"
+      },
+      {
+        "date": "2025-04-26",
+        "value_date": "2025-04-26",
+        "description": "UPI/676320163287/JIO PREPAID",
+        "ref": "676320163287",
+        "debit": "2058.80",
+        "credit": null,
+        "balance": "95774.75"
+      },
+      {
+        "date": "2025-04-27",
+        "value_date": "2025-04-27",
+        "description": "UPI/788957986872/JANAKI HANDA",
+        "ref": "788957986872",
+        "debit": "1292.53",
+        "credit": null,
+        "balance": "94482.22"
+      },
+      {
+        "date": "2025-04-27",
+        "value_date": "2025-04-27",
+        "description": "UPI/348734714345/MYNTRA",
+        "ref": "348734714345",
+        "debit": "4997.32",
+        "credit": null,
+        "balance": "89484.90"
+      },
+      {
+        "date": "2025-04-28",
+        "value_date": "2025-04-28",
+        "description": "SAVINGS INTEREST CREDIT",
+        "ref": null,
+        "debit": null,
+        "credit": "44.40",
+        "balance": "89529.30"
+      },
+      {
+        "date": "2025-04-28",
+        "value_date": "2025-04-28",
+        "description": "UPI/231665876036/PHARMEASY",
+        "ref": "231665876036",
+        "debit": "2440.00",
+        "credit": null,
+        "balance": "87089.30"
+      },
+      {
+        "date": "2025-04-28",
+        "value_date": "2025-04-28",
+        "description": "UPI/967054668893/AIRTEL PAYMENTS",
+        "ref": "967054668893",
+        "debit": "224.80",
+        "credit": null,
+        "balance": "86864.50"
+      },
+      {
+        "date": "2025-04-28",
+        "value_date": "2025-04-28",
+        "description": "UPI/656272980699/CHAKRADEV KARI",
+        "ref": "656272980699",
+        "debit": "4590.07",
+        "credit": null,
+        "balance": "82274.43"
+      },
+      {
+        "date": "2025-04-30",
+        "value_date": "2025-04-30",
+        "description": "UPI/272046537556/RELIANCE SMART",
+        "ref": "272046537556",
+        "debit": "900.25",
+        "credit": null,
+        "balance": "81374.18"
+      },
+      {
+        "date": "2025-04-30",
+        "value_date": "2025-04-30",
+        "description": "POS BLINKIT VIJAYAWADA",
+        "ref": null,
+        "debit": "2795.25",
+        "credit": null,
+        "balance": "78578.93"
+      },
+      {
+        "date": "2025-04-30",
+        "value_date": "2025-04-30",
+        "description": "UPI/053100330923/HARRISON RAI",
+        "ref": "053100330923",
+        "debit": null,
+        "credit": "303.24",
+        "balance": "78882.17"
+      },
+      {
+        "date": "2025-04-30",
+        "value_date": "2025-04-30",
+        "description": "UPI/193745299124/SUDIKSHA PATLA",
+        "ref": "193745299124",
+        "debit": null,
+        "credit": "1423.52",
+        "balance": "80305.69"
+      }
+    ]
+  }
+}

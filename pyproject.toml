@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stmtai"
+version = "0.1.0"
+description = "Bank statement document intelligence: extraction, confidence scoring, reconciliation and human review."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.5",
+    "reportlab>=4.0",
+    "faker>=24.0",
+    "pymupdf>=1.24",
+    "opencv-python-headless>=4.9",
+    "numpy>=1.26",
+    "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

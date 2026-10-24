@@ -1,0 +1,278 @@
+{
+  "doc_id": "modern_zebra_00",
+  "layout": "modern_zebra",
+  "seed": 1042,
+  "fields_present": [
+    "date",
+    "description",
+    "debit",
+    "credit",
+    "balance"
+  ],
+  "statement": {
+    "bank_name": "Kaveri Mercantile Bank",
+    "account_holder": "ARYAN BATRA",
+    "account_number": "25707384191",
+    "ifsc": "KMBS0504549",
+    "branch": "KOTTAYAM MAIN BRANCH",
+    "currency": "INR",
+    "period_start": "2025-08-01",
+    "period_end": "2025-08-31",
+    "opening_balance": "124967.14",
+    "closing_balance": "245659.85",
+    "transactions": [
+      {
+        "date": "2025-08-01",
+        "value_date": "2025-08-01",
+        "description": "UPI/234187445968/APOLLO PHARMACY",
+        "ref": "234187445968",
+        "debit": "1710.00",
+        "credit": null,
+        "balance": "123257.14"
+      },
+      {
+        "date": "2025-08-02",
+        "value_date": "2025-08-02",
+        "description": "UPI/324563730275/MADHAV PANT",
+        "ref": "324563730275",
+        "debit": null,
+        "credit": "5034.89",
+        "balance": "128292.03"
+      },
+      {
+        "date": "2025-08-02",
+        "value_date": "2025-08-02",
+        "description": "UPI/657802068609/GANGA MISTRY",
+        "ref": "657802068609",
+        "debit": "764.80",
+        "credit": null,
+        "balance": "127527.23"
+      },
+      {
+        "date": "2025-08-07",
+        "value_date": "2025-08-08",
+        "description": "ECS/EMI HOME LOAN LN47642772",
+        "ref": "LN47642772",
+        "debit": "6304.34",
+        "credit": null,
+        "balance": "121222.89"
+      },
+      {
+        "date": "2025-08-07",
+        "value_date": "2025-08-07",
+        "description": "UPI/385776635444/APOLLO PHARMACY",
+        "ref": "385776635444",
+        "debit": "5333.37",
+        "credit": null,
+        "balance": "115889.52"
+      },
+      {
+        "date": "2025-08-07",
+        "value_date": "2025-08-07",
+        "description": "ATM WDL 920483 KATNI",
+        "ref": null,
+        "debit": "1000.00",
+        "credit": null,
+        "balance": "114889.52"
+      },
+      {
+        "date": "2025-08-07",
+        "value_date": "2025-08-07",
+        "description": "UPI/944453459774/JIO PREPAID",
+        "ref": "944453459774",
+        "debit": "1860.00",
+        "credit": null,
+        "balance": "113029.52"
+      },
+      {
+        "date": "2025-08-10",
+        "value_date": "2025-08-10",
+        "description": "SMS ALERT CHARGES",
+        "ref": null,
+        "debit": "23.60",
+        "credit": null,
+        "balance": "113005.92"
+      },
+      {
+        "date": "2025-08-10",
+        "value_date": "2025-08-11",
+        "description": "IMPS/315363897514/ONKAR SRIVASTAVA",
+        "ref": "315363897514",
+        "debit": "11867.11",
+        "credit": null,
+        "balance": "101138.81"
+      },
+      {
+        "date": "2025-08-12",
+        "value_date": "2025-08-12",
+        "description": "UPI/746229560152/ONVEER NAGAR",
+        "ref": "746229560152",
+        "debit": "3452.34",
+        "credit": null,
+        "balance": "97686.47"
+      },
+      {
+        "date": "2025-08-12",
+        "value_date": "2025-08-12",
+        "description": "UPI/727843111030/IRCTC",
+        "ref": "727843111030",
+        "debit": "3450.00",
+        "credit": null,
+        "balance": "94236.47"
+      },
+      {
+        "date": "2025-08-14",
+        "value_date": "2025-08-14",
+        "description": "ATM WDL 681900 GUNA",
+        "ref": null,
+        "debit": "1000.00",
+        "credit": null,
+        "balance": "93236.47"
+      },
+      {
+        "date": "2025-08-15",
+        "value_date": "2025-08-15",
+        "description": "UPI/973530608279/AIRTEL PAYMENTS",
+        "ref": "973530608279",
+        "debit": "6160.68",
+        "credit": null,
+        "balance": "87075.79"
+      },
+      {
+        "date": "2025-08-15",
+        "value_date": "2025-08-15",
+        "description": "POS UBER INDIA PARBHANI",
+        "ref": null,
+        "debit": "6112.28",
+        "credit": null,
+        "balance": "80963.51"
+      },
+      {
+        "date": "2025-08-16",
+        "value_date": "2025-08-16",
+        "description": "UPI/276800290153/DHRUV PARMAR",
+        "ref": "276800290153",
+        "debit": "4042.58",
+        "credit": null,
+        "balance": "76920.93"
+      },
+      {
+        "date": "2025-08-18",
+        "value_date": "2025-08-18",
+        "description": "UPI/287377311752/UBER INDIA",
+        "ref": "287377311752",
+        "debit": "822.39",
+        "credit": null,
+        "balance": "76098.54"
+      },
+      {
+        "date": "2025-08-20",
+        "value_date": "2025-08-20",
+        "description": "UPI/445800334583/POOJA SINGH",
+        "ref": "445800334583",
+        "debit": "3830.00",
+        "credit": null,
+        "balance": "72268.54"
+      },
+      {
+        "date": "2025-08-22",
+        "value_date": "2025-08-22",
+        "description": "UPI/570980406969/PHARMEASY",
+        "ref": "570980406969",
+        "debit": "5420.00",
+        "credit": null,
+        "balance": "66848.54"
+      },
+      {
+        "date": "2025-08-23",
+        "value_date": "2025-08-23",
+        "description": "UPI/113201771649/SAMESH JANI",
+        "ref": "113201771649",
+        "debit": null,
+        "credit": "129.36",
+        "balance": "66977.90"
+      },
+      {
+        "date": "2025-08-25",
+        "value_date": "2025-08-25",
+        "description": "UPI/477185462254/JIO PREPAID",
+        "ref": "477185462254",
+        "debit": "3232.11",
+        "credit": null,
+        "balance": "63745.79"
+      },
+      {
+        "date": "2025-08-26",
+        "value_date": "2025-08-26",
+        "description": "UPI/794421386576/AIRTEL PAYMENTS",
+        "ref": "794421386576",
+        "debit": "5170.00",
+        "credit": null,
+        "balance": "58575.79"
+      },
+      {
+        "date": "2025-08-26",
+        "value_date": "2025-08-26",
+        "description": "UPI/898692178836/DMART",
+        "ref": "898692178836",
+        "debit": "1994.88",
+        "credit": null,
+        "balance": "56580.91"
+      },
+      {
+        "date": "2025-08-27",
+        "value_date": "2025-08-27",
+        "description": "NEFT-N105946192442905-HENRY DHAR",
+        "ref": "N105946192442905",
+        "debit": null,
+        "credit": "24620.00",
+        "balance": "81200.91"
+      },
+      {
+        "date": "2025-08-27",
+        "value_date": "2025-08-27",
+        "description": "UPI/590128547277/PHARMEASY",
+        "ref": "590128547277",
+        "debit": "5044.41",
+        "credit": null,
+        "balance": "76156.50"
+      },
+      {
+        "date": "2025-08-28",
+        "value_date": "2025-08-28",
+        "description": "NEFT-N819037979625497-NORTHWIND SERVICES LTD-SALARY",
+        "ref": "N819037979625497",
+        "debit": null,
+        "credit": "137060.00",
+        "balance": "213216.50"
+      },
+      {
+        "date": "2025-08-28",
+        "value_date": "2025-08-28",
+        "description": "SAVINGS INTEREST CREDIT",
+        "ref": null,
+        "debit": null,
+        "credit": "93.35",
+        "balance": "213309.85"
+      },
+      {
+        "date": "2025-08-28",
+        "value_date": "2025-08-28",
+        "description": "IMPS/155526445522/EKAJA RAJU",
+        "ref": "155526445522",
+        "debit": null,
+        "credit": "23900.00",
+        "balance": "237209.85"
+      },
+      {
+        "date": "2025-08-30",
+        "value_date": "2025-08-30",
+        "description": "UPI/039484955274/OWEN NAYAR",
+        "ref": "039484955274",
+        "debit": null,
+        "credit": "8450.00",
+        "balance": "245659.85"
+      }
+    ]
+  }
+}
