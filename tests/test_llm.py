@@ -435,3 +435,29 @@ def test_evaluation_can_score_the_rules_alone(pdf):
     assert doc["per_field"]["description"]["rule_proposed"] == 1
     report = render(summarize([doc]), "", "scan_medium", None, {})
     assert "rules only" in report and "Rules versus the model" in report
+
+
+# ----------------------------------------------------------------------------- the dropped-letter probe
+def test_probe_damages_names_and_scores_a_model(pdf):
+    from stmtai.llm import probe
+
+    data = Path(pdf).parent
+    cases = probe.build_cases(data, n_damaged=8, n_clean=4, seed=3)
+    damaged_cases = [c for c in cases if c["kind"] != "clean"]
+    assert len(damaged_cases) == 8 and sum(c["kind"] == "clean" for c in cases) == 4
+    assert all(c["read"] != c["truth"] and c["read"].rsplit("/", 1)[0] == c["truth"].rsplit("/", 1)[0] for c in damaged_cases)  # only the name is damaged
+    assert all(c["read"] == c["truth"] for c in cases if c["kind"] == "clean")
+
+    truth_of = {c["read"]: c["truth"] for c in cases}
+    def perfect(system, user, schema):
+        return {"items": [{"id": json.loads(l)["id"], "text": truth_of[json.loads(l)["text"]]} for l in user.splitlines()]}
+
+    with FakeOllama(perfect) as srv:
+        res = probe.run(OllamaClient(host=srv.host), cases)
+    s = probe.summarize(res)
+    assert s["fixed"] == 8 and s["wrong_suggestion"] == 0 and s["clean_changed"] == 0
+
+    with FakeOllama(model()) as srv:   # a model that never changes anything
+        s2 = probe.summarize(probe.run(OllamaClient(host=srv.host), cases))
+    assert s2["fixed"] == 0 and s2["no_suggestion"] == 8
+    assert "restored exactly" in probe.render(s, "fake", 1.0, 3)

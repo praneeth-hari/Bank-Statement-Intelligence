@@ -12,6 +12,7 @@ Nothing here is required: without it the app works exactly as before.
    | `qwen2.5:3b` | ~1.9 GB | default; follows JSON schemas reliably |
    | `llama3.2:3b` | ~2.0 GB | alternative |
    | `qwen2.5:1.5b` | ~1.0 GB | fastest, weakest on names |
+   | `llama3.1:8b` | ~4.9 GB | does not fit a 4 GB GPU: Ollama puts some layers on the GPU and the rest on the CPU, so it is several times slower and wants ~8 GB of free RAM |
 
    ```
    ollama pull qwen2.5:3b
@@ -28,6 +29,15 @@ python -m stmtai.llm.evaluate --kind scan_medium --limit 12 --out data/runs/llm_
 Add `--no-model` to score only the deterministic rules, which needs no Ollama. Reads the cached OCR for the scans (or runs RapidOCR on first use), asks the model about the cells the arithmetic
 could not settle, and scores the answers against the synthetic ground truth. `report.md` has the table;
 `answers.jsonl` has every raw answer and why it was accepted or blocked.
+
+To compare models on dropped-letter repair, the one error type left after the rules, use the controlled probe. It
+damages real descriptions from the ground truth the way OCR does, mixes in undamaged ones as controls, and
+reports how many the model restores and how many it wrongly changes:
+
+```
+python -m stmtai.llm.probe --model qwen2.5:3b --out data/runs/probe_3b
+python -m stmtai.llm.probe --model llama3.1:8b --out data/runs/probe_8b
+```
 
 To switch it on in the app:
 
