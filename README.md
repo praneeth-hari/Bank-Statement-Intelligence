@@ -116,7 +116,9 @@ Amount recall compares digits only, so it is lenient about separators on purpose
   so part of that gap is tuning, not just the engine.
 - **Unlimited-OCR** (3B vision-language model) returns block-level text, not word boxes, so it can only be
   scored with the text benchmark. `notebooks/unlimited_ocr_colab.ipynb` runs it on a free GPU and writes
-  the text files this benchmark reads. **That run has not been done yet**, so it is not in the table.
+  the text files this benchmark reads. The notebook was run on all the scans, but the outputs were not
+  brought back into the repo, so **Unlimited-OCR is not in the table**. On the heavy scans it was seen
+  inventing pages that are not in the document; that was an observation, not a scored result.
 
 ## The API (step 5)
 
@@ -270,7 +272,7 @@ whether that held.
 1. [x] Synthetic statement generator with ground truth
 2. [x] Digital extraction, confidence scoring, evaluation + robustness harness
 3. [x] Scan path: deskew, OCR with confidence, tolerant table reconstruction, calibration
-4. [~] Benchmark OCR engines on the same labelled scans (RapidOCR, Tesseract done; Unlimited-OCR notebook ready, not yet run)
+4. [x] Benchmark OCR engines on the same labelled scans: RapidOCR and Tesseract scored; Unlimited-OCR run on Colab but not scored (see the benchmark section)
 5. [x] FastAPI service: upload, review queue, corrections with undo, approval, export, feedback metrics
 6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
 7. [ ] LLM fallback for messy rows, natural-language query layer, Docker, demo video
