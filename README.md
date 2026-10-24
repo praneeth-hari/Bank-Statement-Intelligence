@@ -335,6 +335,29 @@ test breaks the engine on purpose to prove the harness notices.
 | After fixing those, plus a guard against unrecognised words | 42 / 42 | 0 | 0 | the guard briefly cost 8 refusals on harmless words (`single`, `big`), which are now allowed |
 | 25 new questions, unseen | 25 / 25 | 0 | 0 | computed from the true transactions |
 
+The model parser, measured on the same 50 questions with `llama3.1:8b` (`--mode model`, no rules in front of it):
+
+| Run | Correct | Confidently wrong | Refused (answerable) | Unanswerable refused |
+|---|---|---|---|---|
+| Rules, then model | 42 / 42 | 0 | 0 | 8 / 8 |
+| Model alone | 36 / 42 | **6** | 0 | 8 / 8 |
+| Model alone, with the reading check | 36 / 42 | **0** | 6 | 8 / 8 |
+
+In the first row the model is only asked about the 8 questions the rules refuse, which are the unanswerable
+ones, and it declines all of them. It adds nothing here because the rules already answer everything; this set
+cannot show what the model is worth on wording the rules do not know. Alone, it was confidently wrong on 6:
+"average UPI payment" read as credits, "3 largest debits" returned as one value, "payments over 1000" counting
+every transaction, and "2000 or more" turned into an exact amount. The reading check (`check_reading`) compares
+a model's query with the question's own words and rejects a contradiction: money in the wrong direction, a
+number in the question the query does not use, a count that is not returned, a bound nobody asked for. All six
+became refusals with a reason; none of the 36 correct readings was blocked. The cost is that the model alone
+answers 86% instead of 100% and says "I could not read that reliably" for the rest, which is the trade this
+layer is built to make.
+
+The check only catches contradictions that can be seen in the words. A model reading that is wrong in a way the
+question text does not reveal (a different merchant spelling, say) would pass it, so every answer shows its
+`interpretation` and the rows behind it, and `/query` reports which parser was used.
+
 The honest reading: the in-sample score says little; the fresh phrasings are the real test, and the main thing
 they showed is that a rules parser fails by *ignoring* words it does not know. The unrecognised-word guard fixes
 the class of error rather than the three examples. What it costs is some refusals on legitimate but unusual
