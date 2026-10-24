@@ -18,7 +18,10 @@ RUN apt-get update \
 WORKDIR /app
 COPY pyproject.toml ./
 COPY src/ src/
-RUN pip install --no-cache-dir ".[api,ocr]"
+# The cache mount keeps downloaded packages between builds, so a cancelled or failed build resumes instead of
+# starting the download again. (Needs BuildKit, which Docker Desktop uses by default.)
+ENV PIP_DEFAULT_TIMEOUT=120 PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN --mount=type=cache,target=/root/.cache/pip pip install ".[api,ocr]"
 COPY --from=web /web/dist /app/web
 
 RUN useradd --create-home --uid 10001 app && mkdir /data && chown app /data
