@@ -138,6 +138,7 @@ python -m stmtai.api                      # http://127.0.0.1:8000, interactive d
 | `DELETE /statements/{id}/corrections/{cid}` | Undo. |
 | `POST /statements/{id}/approve` | Sign off. Refused (`409`) while cells still need review, unless `?force=true`. Approved statements are frozen until reopened. |
 | `GET /statements/{id}/export.csv` / `.json` | Corrected data, with a header saying how many fields were never reviewed. |
+| `POST /query` | Ask a question in plain English about **approved** statements. Returns the answer, how the question was understood, and the exact rows behind it. |
 | `GET /feedback` | How well the confidence scores matched what reviewers actually did. |
 
 Design decisions worth knowing:
@@ -292,6 +293,58 @@ this step (no table is found), so neither rules nor a text model reach them. Let
 (`WRIDESHVALA`) are beyond both rules and a 3B model reading text alone; reading the pixels again with a vision
 model is the next thing to try.
 
+## Asking questions (step 8)
+
+```bash
+curl -X POST localhost:8000/query -H "Content-Type: application/json" \
+     -d '{"question": "How much did I spend on UPI in March 2025?"}'
+```
+
+The question is answered from **approved statements only**, so a number is never built on cells nobody has
+checked. The reply has the value, `interpretation` (the question as understood, in words, for example
+`total debits, of type UPI, from 2025-03-01 to 2025-03-31`), any `notes`, and the rows that were counted, each with
+its statement and row number so a reviewer can jump to the cell.
+
+How it works, and why it is built this way:
+
+- **A question becomes a small validated query, never code.** The query has a fixed shape (what to compute: sum,
+  count, largest, smallest, average, list or last balance; debits, credits, net or balance; dates; transaction
+  types; names; amount bounds; grouping). A plain Python engine runs it over the rows. There is no SQL and no
+  `eval`, so neither the rules nor a model can reach anything but the numbers.
+- **Rules first, a model second.** A rules parser handles the usual phrasings and knows the names that occur in
+  the data. Only if it refuses is the optional Ollama model (`STMTAI_LLM=ollama`) asked to fill in the same query
+  shape; what it returns is validated like anything else, and `"parser": "rules"` in `/query` never calls it.
+- **A refusal beats a wrong number.** Questions about the weather, advice or predictions are refused. So is a
+  question containing a number or a word no rule used (`I did not understand 'outlay'`), because silently
+  ignoring it would answer a different question. Ambiguous ones are refused with the reason, for example
+  "average per month" (average transaction, or average of the monthly totals?).
+- **Honest about what it combined.** Several statements are combined unless `statement_ids` narrows it, and the
+  reply says they may be different accounts. Rows without a date, balance or a single amount are left out and
+  counted.
+
+Evaluation (`python -m stmtai.query.evaluate`, add `--model qwen2.5:3b` to try the model parser): 42 answerable
+questions of ten kinds, half plainly worded and half indirect, plus 8 that must be refused, asked of the synthetic
+statements. Expected answers are computed with separate loops over the true transactions, not by the engine, and a
+test breaks the engine on purpose to prove the harness notices.
+
+| Run | Correct | Confidently wrong | Refused | Notes |
+|---|---|---|---|---|
+| First version of the rules | 35 / 42 | 5 | 2 | all five wrong ones were indirect phrasings |
+| After fixing those | 42 / 42 | 0 | 0 | **in-sample**: I fixed the parser against these very questions |
+| 24 fresh phrasings, read by eye | not scored | 7 wrong or misleading | 3, rightly | the 7: a dropped plural (`ATMs`), interest read as a debit, `five` read as ten, "count my" summed, "what was left" read as total debits, a day listing as "largest debits", an ambiguous "average monthly" answered |
+| After fixing those, plus a guard against unrecognised words | 42 / 42 | 0 | 0 | the guard briefly cost 8 refusals on harmless words (`single`, `big`), which are now allowed |
+| 25 new questions, unseen | 25 / 25 | 0 | 0 | computed from the true transactions |
+
+The honest reading: the in-sample score says little; the fresh phrasings are the real test, and the main thing
+they showed is that a rules parser fails by *ignoring* words it does not know. The unrecognised-word guard fixes
+the class of error rather than the three examples. What it costs is some refusals on legitimate but unusual
+wording ("outlay"), which is where the optional model parser is meant to help. Its effect is measured the same
+way, on your machine, with `--model`.
+
+Limits: the vocabulary is English and about money movements; it does not know spending categories such as
+"groceries" (it knows transaction types and the names in your statements); relative dates ("last week") are not
+understood; and the synthetic statements use a small set of merchants, which flatters name matching.
+
 ## How confidence works
 
 The running balance is the strongest correctness signal a statement has:
@@ -382,7 +435,7 @@ whether that held.
 5. [x] FastAPI service: upload, review queue, corrections with undo, approval, export, feedback metrics
 6. [x] React review UI: page with boxes, one-cell focus with the arithmetic, grouped queue, bulk confirm, undo, approval
 7. [x] Text and date suggestions: exact rules plus an optional Ollama fallback, both checked against the document, with an evaluation harness. Measured result: the rules help, the 3B text model adds nothing yet (off by default)
-8. [ ] Natural-language query layer over approved statements
+8. [x] Natural-language query layer: rules plus an optional model parser, a validated query run by a plain engine, answers with the rows behind them, evaluated against independently computed answers
 9. [ ] Docker and a demo video
 
 ## Layout of the repo
@@ -396,6 +449,7 @@ src/stmtai/
   calibrate.py     per-field review threshold sweep on held-out data
   benchmark.py     engine-independent OCR text benchmark (amount/date/reference recall)
   feedback.py      flag quality measured from reviewer corrections
+  query/           question -> validated query -> engine; rules and optional model parser; evaluation (python -m stmtai.query.evaluate)
   llm/             rules and Ollama client, proposal checks, fallback and its evaluation (python -m stmtai.llm.evaluate)
   api/             FastAPI app, storage and view-building (raw -> corrections -> re-score)
   extract/
@@ -406,7 +460,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             224 Python tests (plus 12 in web/), including negative controls for the evaluator itself
+tests/             273 Python tests (plus 12 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

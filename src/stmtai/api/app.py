@@ -14,6 +14,7 @@ Endpoints (all under the same origin; interactive docs at /docs):
     DELETE /statements/{id}/corrections/{cid}   undo
     POST   /statements/{id}/approve             sign off (refused while cells still need review)
     GET    /statements/{id}/export.csv|json     corrected data
+    POST   /query                               ask a question about approved statements; answered with the rows behind it
     GET    /feedback                            how well the confidence scores matched reviewer behaviour
 """
 
@@ -34,6 +35,8 @@ from ..extract.scoring import review_items, threshold_for
 from ..feedback import summarize
 from ..llm.client import LLMUnavailable, from_spec
 from ..llm.fallback import apply_rules, llm_fallback
+from ..query.ask import ask as ask_question
+from ..query.data import rows_from_extraction
 from . import service
 from .service import ACTIONS, Store, apply_corrections, locate
 
@@ -56,6 +59,12 @@ class Settings:
 
 class BulkIn(BaseModel):
     group: str  # only groups marked "bulk" in the review response can be confirmed in one go
+
+
+class QueryIn(BaseModel):
+    question: str
+    statement_ids: Optional[list[str]] = None  # default: every approved statement
+    parser: Literal["auto", "rules"] = "auto"  # "rules" never calls the model, even when one is configured
 
 
 class CorrectionIn(BaseModel):
@@ -292,6 +301,48 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         if not store.delete(sid):
             raise HTTPException(404, "No such statement.")
         return Response(status_code=204)
+
+    @app.post("/query", dependencies=[Depends(auth)])
+    def query(body: QueryIn) -> dict:
+        """Answer a question from approved statements only, so a number is never built on cells nobody has checked."""
+        approved = [r for r in store.list() if r.get("approved_at") and r["status"] == "ready"]
+        if body.statement_ids is not None:
+            wanted = set(body.statement_ids)
+            unknown = wanted - {r["id"] for r in store.list()}
+            if unknown:
+                raise HTTPException(404, f"No such statement: {sorted(unknown)[0]}")
+            not_approved = wanted - {r["id"] for r in approved}
+            if not_approved:
+                raise HTTPException(409, f"Statement {sorted(not_approved)[0]} is not approved yet, so it cannot be queried.")
+            approved = [r for r in approved if r["id"] in wanted]
+        if not approved:
+            raise HTTPException(409, "No approved statements to ask about. Review and approve a statement first.")
+        rows, total, skipped = [], 0, 0
+        for rec in approved:
+            view = service.build_view(store.raw(rec["id"]), store.corrections(rec["id"]))
+            got = rows_from_extraction(view, rec["id"], rec["filename"])
+            rows += got
+            total += len(view.transactions)
+            skipped += len(view.transactions) - len(got)
+        client = cfg.llm if body.parser == "auto" else None
+        res = ask_question(body.question, rows, client=client)
+        out: dict[str, Any] = {"question": body.question, "answered": res.answered, "statements": [r["id"] for r in approved],
+                               "rows_considered": len(rows), "rows_skipped": skipped, "parser": res.parser, "notes": list(res.notes)}
+        if len(approved) > 1:
+            out["notes"].append(f"Combined {len(approved)} statements; they may belong to different accounts.")
+        if skipped:
+            out["notes"].append(f"{skipped} of {total} rows were left out because they lack a date, a balance or a single amount.")
+        if not res.answered:
+            out["reason"] = res.reason
+            return out
+        a = res.answer
+        out.update(interpretation=res.interpretation, query=res.query.model_dump(mode="json"), kind=a.kind, unit=a.unit,
+                   matched=a.matched, value=service.to_json(a.value),
+                   groups=[{"key": k, "value": service.to_json(v)} for k, v in a.groups],
+                   rows=[{"statement_id": r.statement_id, "filename": r.filename, "row": r.row, "date": r.date.isoformat(),
+                          "description": r.description, "debit": service.to_json(r.debit), "credit": service.to_json(r.credit),
+                          "balance": service.to_json(r.balance)} for r in a.rows])
+        return out
 
     @app.get("/feedback", dependencies=[Depends(auth)])
     def feedback() -> dict:
