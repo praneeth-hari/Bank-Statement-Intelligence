@@ -269,6 +269,7 @@ restores exactly. On 60 damaged and 30 undamaged descriptions:
 | `llama3.1:8b`, text only (partly on CPU, ~18 s per call) | 10 of 60 | 0 of 30 |
 | statement's own repeated names, no model | 10 of 60 | 0 of 30 |
 | names also seen on other statements, no model | 25 of 60 | 0 of 30 |
+| `llama3.1:8b` given those names as hints | 27 of 60 | 0 of 30 |
 
 The reason is that OCR damages a merchant that is usually printed correctly somewhere else (`RCTC` against a
 dozen `IRCTC`). So the vocabulary rule (`stmtai/llm/vocab.py`) treats any name seen at least twice as known and
@@ -276,8 +277,14 @@ repairs a name that is one or two edits from exactly one known name; ties are le
 (most people) is never pulled towards a stranger. In the API the vocabulary includes the names from statements a
 reviewer has already approved, so the system gets better the more it is used. Two honest limits: the synthetic
 data draws merchants from a list of 19, which flatters the vocabulary rule, and people's names (35 of the 60
-cases) are out of its reach. Those are where a model has to help, and `--hints` gives it the nearby known names
-to choose from.
+cases) are out of its reach.
+
+Those are where a model would have to help, and it does not. Given the nearby known names, `llama3.1:8b`
+restores 27 of 60: the 25 the rule already gets, plus 2 more, with one wrong suggestion, at about 18 s per call
+and more memory than a 4 GB GPU holds. The 33 cases neither reaches are mostly people's names, written once,
+with nothing in any statement to repair them from. A model reading text alone cannot invent a spelling it has not
+seen; rereading the pixels with a vision model is the untried option. The conclusion for now: the vocabulary rule
+does the work, and the model stays optional and off by default.
 
 Limits, stated plainly: a wrong one-letter edit that keeps the digits and the prefix passes every check, so
 the reviewer is still the safety net and the accept rate is the metric to watch. Heavy scans fail earlier than
