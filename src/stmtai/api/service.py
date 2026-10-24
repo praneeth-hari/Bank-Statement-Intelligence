@@ -306,6 +306,19 @@ class Store:
             f.unlink(missing_ok=True)
         return bool(n)
 
+    def approved_descriptions(self, exclude: Optional[str] = None) -> list[str]:
+        """Final (reviewer-corrected) descriptions of every approved statement: names a human has vouched for."""
+        out: list[str] = []
+        for rec in self.list():
+            if not rec.get("approved_at") or rec["id"] == exclude or rec["status"] != "ready":
+                continue
+            raw = self.raw(rec["id"])
+            if raw is None:
+                continue
+            view = build_view(raw, self.corrections(rec["id"]))
+            out += [str(t.value("description")) for t in view.transactions if t.value("description")]
+        return out
+
     def raw(self, sid: str) -> Optional[ExtractedStatement]:
         rec = self.get(sid)
         if not rec or not rec["raw_json"]:

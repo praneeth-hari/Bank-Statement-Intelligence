@@ -258,6 +258,27 @@ fallback stays **off by default** (`STMTAI_LLM` unset) and is kept as a measured
 a claimed improvement. The harness that produced this finding is the useful part: it will show immediately if
 a larger model, or a vision model that rereads the cell image, does better.
 
+**Fourth run: the dropped-letter probe, and the better idea it led to.** The scans leave too few wrong
+descriptions to compare models on, so `python -m stmtai.llm.probe` damages real descriptions the way OCR does
+(a letter dropped or swapped) and mixes in undamaged controls. It measures how many damaged descriptions a model
+restores exactly. On 60 damaged and 30 undamaged descriptions:
+
+| tool | restored | undamaged ones wrongly changed |
+|---|---|---|
+| `qwen2.5:3b`, text only | 5 of 60 | 3 of 30 |
+| `llama3.1:8b`, text only (partly on CPU, ~18 s per call) | 10 of 60 | 0 of 30 |
+| statement's own repeated names, no model | 10 of 60 | 0 of 30 |
+| names also seen on other statements, no model | 25 of 60 | 0 of 30 |
+
+The reason is that OCR damages a merchant that is usually printed correctly somewhere else (`RCTC` against a
+dozen `IRCTC`). So the vocabulary rule (`stmtai/llm/vocab.py`) treats any name seen at least twice as known and
+repairs a name that is one or two edits from exactly one known name; ties are left alone, and a name seen once
+(most people) is never pulled towards a stranger. In the API the vocabulary includes the names from statements a
+reviewer has already approved, so the system gets better the more it is used. Two honest limits: the synthetic
+data draws merchants from a list of 19, which flatters the vocabulary rule, and people's names (35 of the 60
+cases) are out of its reach. Those are where a model has to help, and `--hints` gives it the nearby known names
+to choose from.
+
 Limits, stated plainly: a wrong one-letter edit that keeps the digits and the prefix passes every check, so
 the reviewer is still the safety net and the accept rate is the metric to watch. Heavy scans fail earlier than
 this step (no table is found), so neither rules nor a text model reach them. Letters the OCR dropped entirely

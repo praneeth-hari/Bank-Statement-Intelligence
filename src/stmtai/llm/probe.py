@@ -25,6 +25,7 @@ from ..schema import Label
 from .client import OllamaClient
 from .fallback import DESCRIPTION_SCHEMA, DESCRIPTION_SYSTEM, _ask
 from .validate import check_description, squash
+from .vocab import Vocabulary, hints_for, vocab_rule
 
 _LOOKALIKE_SWAP = {"E": "F", "M": "N", "H": "N", "R": "P", "U": "V", "B": "R", "D": "O", "C": "G", "L": "I", "W": "V", "K": "X"}
 _RAIL_NAME = re.compile(r"^((?:UPI|IMPS)/\d{10,13}/)([A-Z][A-Z .]{3,})$")
@@ -44,12 +45,29 @@ def damage(description: str, rng: random.Random) -> Optional[tuple[str, str]]:
     return (head + name[:i] + swap + name[i + 1:], "swapped") if swap else (head + name[:i] + name[i + 1:], "dropped")
 
 
+def _others(everything: list[str], desc: str) -> list[str]:
+    """The rest of the statement, as the extractor would see it: the cell's own description is not in it."""
+    out = list(everything)
+    out.remove(desc)
+    return out
+
+
 def build_cases(data: Path, n_damaged: int, n_clean: int, seed: int) -> list[dict[str, Any]]:
     rng = random.Random(seed)
     names: list[str] = []
+    context: dict[str, list[str]] = {}  # description -> every description on the same statement (the rest of its page)
+    by_doc: dict[str, list[str]] = {}
+    owner: dict[str, str] = {}
     for lp in sorted(data.glob("*.json")):
         label = Label.model_validate_json(lp.read_text(encoding="utf-8"))
-        names += [t.description for t in label.statement.transactions if _RAIL_NAME.match(t.description)]
+        everything = [t.description for t in label.statement.transactions]
+        by_doc[label.doc_id] = everything
+        for d in everything:
+            if _RAIL_NAME.match(d) and d not in context:
+                context[d] = everything
+                owner[d] = label.doc_id
+        names += [d for d in everything if _RAIL_NAME.match(d)]
+    pooled = {doc: [d for other, ds in by_doc.items() if other != doc for d in ds] for doc in by_doc}
     names = sorted(set(names))
     rng.shuffle(names)
     cases: list[dict[str, Any]] = []
@@ -58,27 +76,49 @@ def build_cases(data: Path, n_damaged: int, n_clean: int, seed: int) -> list[dic
             break
         d = damage(desc, rng)
         if d and squash(d[0]) != squash(desc):
-            cases.append({"truth": desc, "read": d[0], "kind": d[1]})
+            cases.append({"truth": desc, "read": d[0], "kind": d[1], "context": _others(context[desc], desc),
+                          "pool": pooled[owner[desc]]})
     for desc in names[::-1]:
         if sum(c["kind"] == "clean" for c in cases) >= n_clean:
             break
         if all(c["truth"] != desc for c in cases):
-            cases.append({"truth": desc, "read": desc, "kind": "clean"})
+            cases.append({"truth": desc, "read": desc, "kind": "clean", "context": _others(context[desc], desc),
+                          "pool": pooled[owner[desc]]})
     rng.shuffle(cases)
     return cases
 
 
-def run(client: OllamaClient, cases: list[dict[str, Any]], batch: int = 6) -> list[dict[str, Any]]:
+def run(client: OllamaClient, cases: list[dict[str, Any]], batch: int = 6, hints: bool = False) -> list[dict[str, Any]]:
     out = []
     for i in range(0, len(cases), batch):
         chunk = cases[i:i + batch]
-        answers = _ask(client, DESCRIPTION_SYSTEM, [{"id": j, "text": c["read"]} for j, c in enumerate(chunk)], DESCRIPTION_SCHEMA)
+        payload = []
+        for j, c in enumerate(chunk):
+            item: dict[str, Any] = {"id": j, "text": c["read"]}
+            seen = hints_for(c["read"], Vocabulary(c["context"] + c["pool"])) if hints else []
+            if seen:
+                item["seen_names"] = seen
+            payload.append(item)
+        answers = _ask(client, DESCRIPTION_SYSTEM, payload, DESCRIPTION_SCHEMA)
         for j, c in enumerate(chunk):
             ans = answers.get(j)
             reason = check_description(c["read"], ans) if ans is not None else "unanswered"
             out.append({**c, "answer": ans, "rejected": reason, "accepted": reason is None})
         print(f"  {min(i + batch, len(cases))}/{len(cases)}", flush=True)
     return out
+
+
+def vocabulary_only(cases: list[dict[str, Any]], pooled: bool = False) -> dict[str, int]:
+    """Repeated names as the only tool, no model: this statement's own, or also those of other (approved) statements."""
+    damaged = [c for c in cases if c["kind"] != "clean"]
+    clean = [c for c in cases if c["kind"] == "clean"]
+    def fix(c):
+        out = vocab_rule(c["read"], Vocabulary(c["context"] + (c["pool"] if pooled else [])))
+        return out if out and check_description(c["read"], out) is None else None
+    right = sum(1 for c in damaged if (fix(c) or "") and squash(fix(c)) == squash(c["truth"]))
+    wrong = sum(1 for c in damaged if fix(c) and squash(fix(c)) != squash(c["truth"]))
+    return {"damaged": len(damaged), "restored": right, "wrong": wrong, "clean": len(clean),
+            "clean_changed": sum(1 for c in clean if fix(c))}
 
 
 def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -94,9 +134,10 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
             "clean": len(clean), "clean_changed": sum(r["accepted"] for r in clean)}
 
 
-def render(s: dict[str, Any], model: str, seconds: float, calls: int) -> str:
+def render(s: dict[str, Any], model: str, seconds: float, calls: int, vocab: Optional[dict[str, dict[str, int]]] = None,
+           hints: bool = False) -> str:
     pct = lambda a, b: f"{100 * a / b:.0f}%" if b else "n/a"  # noqa: E731
-    lines = [f"# Dropped-letter probe, model `{model}`", "",
+    lines = [f"# Dropped-letter probe, model `{model}`" + (" (given names seen on this and other statements)" if hints else ""), "",
              f"**{s['fixed']} of {s['damaged']} damaged descriptions restored exactly ({pct(s['fixed'], s['damaged'])}); "
              f"{s['clean_changed']} of {s['clean']} undamaged ones wrongly changed.**", "",
              "| outcome | count |", "|---|---|",
@@ -104,6 +145,9 @@ def render(s: dict[str, Any], model: str, seconds: float, calls: int) -> str:
              f"| no suggestion (unchanged or blocked) | {s['no_suggestion']} |", ""]
     for k, v in s["by_kind"].items():
         lines.append(f"- {k} letter: {v['fixed']} of {v['n']} restored ({pct(v['fixed'], v['n'])})")
+    for label, v in (vocab or {}).items():
+        lines += ["", f"No model, {label}: {v['restored']} of {v['damaged']} restored, {v['wrong']} wrong, "
+                      f"{v['clean_changed']} of {v['clean']} undamaged changed."]
     lines += ["", f"Blocked by the checks: {s['blocked'] or 'none'}", "",
               f"{calls} model calls, {seconds:.0f}s total. Synthetic damage: use this to compare models, not as scan accuracy."]
     return "\n".join(lines)
@@ -118,6 +162,7 @@ def main() -> None:
     p.add_argument("--clean", type=int, default=30)
     p.add_argument("--seed", type=int, default=11)
     p.add_argument("--cache", type=Path, default=Path("data/llm_cache"))
+    p.add_argument("--hints", action="store_true", help="give the model the names seen elsewhere on the statement")
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args()
     kwargs: dict[str, Any] = {"cache_dir": args.cache}
@@ -130,14 +175,15 @@ def main() -> None:
     cases = build_cases(args.data, args.damaged, args.clean, args.seed)
     if not cases:
         raise SystemExit(f"no payment descriptions found in {args.data}")
-    results = run(client, cases)
-    report = render(summarize(results), client.model, client.seconds, client.calls)
+    results = run(client, cases, hints=args.hints)
+    report = render(summarize(results), client.model, client.seconds, client.calls, {"only this statement's repeated names": vocabulary_only(cases),
+                                                                                        "names also seen on other statements": vocabulary_only(cases, True)}, args.hints)
     print("\n" + report)
     if args.out:
         import json
         args.out.mkdir(parents=True, exist_ok=True)
         (args.out / "probe.md").write_text(report, encoding="utf-8")
-        (args.out / "probe.jsonl").write_text("\n".join(json.dumps(r) for r in results), encoding="utf-8")
+        (args.out / "probe.jsonl").write_text("\n".join(json.dumps({k: v for k, v in r.items() if k not in ("context", "pool")}) for r in results), encoding="utf-8")
 
 
 if __name__ == "__main__":

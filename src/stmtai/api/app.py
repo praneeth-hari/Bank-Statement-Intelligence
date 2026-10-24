@@ -93,11 +93,12 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         try:
             raw = extract_pdf(store.pdf_path(sid), ocr=cfg.ocr, ocr_backend=cfg.ocr_backend,
                               cache_dir=cfg.ocr_cache_dir, scored=False)
-            apply_rules(raw)  # deterministic text and date proposals; always on, cheap, and never overwrite
+            known = store.approved_descriptions(exclude=sid)  # merchants a reviewer has already vouched for
+            apply_rules(raw, known=known)  # deterministic text and date proposals; always on, cheap, and never overwrite
             if cfg.llm is not None:
                 try:
                     cfg.llm.check()
-                    llm_fallback(raw, cfg.llm)
+                    llm_fallback(raw, cfg.llm, known=known)
                 except LLMUnavailable as exc:  # extraction stands on its own; say why the model did not help
                     raw.meta["llm"] = {"status": "unavailable", "error": str(exc)}
             store.set_ready(sid, raw)

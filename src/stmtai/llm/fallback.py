@@ -19,13 +19,14 @@ from __future__ import annotations
 import datetime as dt
 import json
 from collections import Counter
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from ..extract.models import ExtractedStatement
 from ..extract.scoring import review_items, score
 from .client import LLMUnavailable
 from .rules import date_head, date_rule, description_rule
 from .validate import check_date, check_description
+from .vocab import Vocabulary, hints_for, vocab_rule
 
 FLAG = "llm_suggested"
 RULE_FLAG = "rule_suggested"
@@ -40,6 +41,7 @@ Rules:
 - Never change any digit. Never invent digits.
 - Keep the structure. Payment descriptions look like UPI/<12 digits>/<NAME> or IMPS/<12 digits>/<NAME>. A missing '/' before the name may be restored.
 - <NAME> is a merchant (for example SWIGGY) or a person's first name and surname, in capitals. Put a space between first name and surname when it was lost.
+- An item may list "seen_names": names printed more than once elsewhere on the same statement. If the text is a damaged version of one of them, answer with that name.
 - If you are not sure, return the text unchanged.
 
 Examples:
@@ -100,18 +102,26 @@ def _trace(trace: Optional[list[dict]], row: int, field: str, read: Any, answer:
         trace.append({"row": row, "field": field, "read": read, "answer": answer, "rejected": rejected, "source": source})
 
 
-def apply_rules(ext: ExtractedStatement, trace: Optional[list[dict]] = None) -> ExtractedStatement:
-    """Deterministic proposals for the same cells the model would be asked about; see ``stmtai.llm.rules``."""
+def apply_rules(ext: ExtractedStatement, trace: Optional[list[dict]] = None,
+                known: Iterable[str] = ()) -> ExtractedStatement:
+    """Deterministic proposals for the same cells the model would be asked about; see ``stmtai.llm.rules``.
+
+    ``known`` is descriptions from statements a reviewer already approved: the names in them are trusted vocabulary,
+    on top of the names this statement repeats.
+    """
     start, end = ext.header_value("period_start"), ext.header_value("period_end")
     proposed, rejected = 0, Counter()
     cells = candidates(ext)
+    vocab = Vocabulary([*known, *(str(t.value("description") or "") for t in ext.transactions)])
     for row, name in cells:
         fv = ext.transactions[row].fields[name]
         if name in TEXT_FIELDS:
-            answer = description_rule(str(fv.value))
+            read = str(fv.value)
+            repaired = description_rule(read) or read
+            answer = vocab_rule(repaired, vocab) or (repaired if repaired != read else None)
             if answer is None:
                 continue
-            reason = check_description(str(fv.value), answer, lookalikes=True)
+            reason = check_description(read, answer, lookalikes=True)
             _trace(trace, row, name, fv.value, answer, reason, "rule")
             if reason:
                 rejected[reason] += 1
@@ -140,7 +150,7 @@ def apply_rules(ext: ExtractedStatement, trace: Optional[list[dict]] = None) -> 
 
 def suggest(ext: ExtractedStatement, client=None, **kwargs) -> ExtractedStatement:
     """Rules first, then the model for whatever the rules left alone. ``client=None`` runs the rules only."""
-    apply_rules(ext, trace=kwargs.get("trace"))
+    apply_rules(ext, trace=kwargs.get("trace"), known=kwargs.get("known", ()))
     if client is not None:
         llm_fallback(ext, client, **kwargs)
     return ext
@@ -164,7 +174,7 @@ def _ask(client, system: str, payload: list[dict], schema: dict) -> dict[int, st
 
 def llm_fallback(ext: ExtractedStatement, client, batch_size: int = 6, max_cells: int = 120,
                  on_batch: Optional[Callable[[int, int], None]] = None,
-                 trace: Optional[list[dict]] = None) -> ExtractedStatement:
+                 trace: Optional[list[dict]] = None, known: Iterable[str] = ()) -> ExtractedStatement:
     """Attach validated model suggestions to ``ext`` in place and return it. Safe to call on a raw or scored extraction.
 
     ``trace``, when given, receives one record per cell asked: what the model answered and why it was or was not
@@ -183,11 +193,15 @@ def llm_fallback(ext: ExtractedStatement, client, batch_size: int = 6, max_cells
         done = 0
         for batch in _batches(texts, batch_size):
             payload = []
+            vocab = Vocabulary([*known, *(str(t.value("description") or "") for t in ext.transactions)])
             for i, (row, name) in enumerate(batch):
                 t = ext.transactions[row]
                 item = {"id": i, "text": t.fields[name].value}
                 if t.value("ref"):
                     item["reference_column"] = t.value("ref")
+                hints = hints_for(str(t.fields[name].value), vocab)
+                if hints:
+                    item["seen_names"] = hints
                 payload.append(item)
             answers = _ask(client, DESCRIPTION_SYSTEM, payload, DESCRIPTION_SCHEMA)
             for i, (row, name) in enumerate(batch):

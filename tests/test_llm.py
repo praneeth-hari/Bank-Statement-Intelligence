@@ -461,3 +461,67 @@ def test_probe_damages_names_and_scores_a_model(pdf):
         s2 = probe.summarize(probe.run(OllamaClient(host=srv.host), cases))
     assert s2["fixed"] == 0 and s2["no_suggestion"] == 8
     assert "restored exactly" in probe.render(s, "fake", 1.0, 3)
+
+
+# ----------------------------------------------------------------------------- the statement's own vocabulary
+from stmtai.llm.vocab import Vocabulary, hints_for, vocab_rule  # noqa: E402
+
+KNOWN = ["UPI/111111111111/IRCTC"] * 5 + ["UPI/222222222222/BLINKIT"] * 3 + ["UPI/333333333333/AMAZON PAY"] * 2 + ["UPI/444444444444/ARJUN NAIR"]
+
+
+@pytest.mark.parametrize("read, expected", [
+    ("UPI/555555555555/RCTC", "UPI/555555555555/IRCTC"),
+    ("UPI/555555555555/BLIKIT", "UPI/555555555555/BLINKIT"),
+    ("UPI/555555555555/AMAZON PY", "UPI/555555555555/AMAZON PAY"),
+    ("UPI/555555555555/IRCTC", None),            # already printed that way elsewhere
+    ("UPI/555555555555/ARJUN NAIK", None),      # a name seen once is not vocabulary: do not drag one person towards another
+    ("UPI/555555555555/ZEPTO", None),
+    ("POS ZOMATO MEERUT", None),
+])
+def test_vocab_rule(read, expected):
+    assert vocab_rule(read, Vocabulary(KNOWN)) == expected
+
+
+def test_vocab_rule_refuses_to_guess_between_equally_close_names():
+    v = Vocabulary(["UPI/111111111111/CAFE ABC"] * 2 + ["UPI/222222222222/CAFE ABD"] * 2)
+    assert vocab_rule("UPI/555555555555/CAFE ABE", v) is None            # one edit from each: a tie
+    assert vocab_rule("UPI/555555555555/CAFE ABX", v) is None
+    assert vocab_rule("UPI/555555555555/CAFE AB", v) is None
+
+
+def test_hints_are_the_nearby_known_names():
+    assert hints_for("UPI/555555555555/RCTC", Vocabulary(KNOWN)) == ["IRCTC"]
+
+
+def test_names_from_approved_statements_become_vocabulary(pdf):
+    raw, _ = damaged(pdf)   # row 2 reads UPI/310045678901/RCTC
+    apply_rules(raw)
+    assert raw.transactions[2].fields["description"].suggestion is None          # nothing to learn from yet
+    raw2, _ = damaged(pdf)
+    apply_rules(raw2, known=["UPI/111111111111/IRCTC"] * 3)
+    d = raw2.transactions[2].fields["description"]
+    assert d.suggestion == "UPI/310045678901/IRCTC" and RULE_FLAG in d.flags and d.value == "UPI/310045678901/RCTC"
+
+
+def test_the_api_learns_names_from_approved_statements(tmp_path, scan_doc):
+    from fastapi.testclient import TestClient
+    from stmtai.api.app import Settings, create_app
+    digital, scan = scan_doc
+    cfg = Settings(data_dir=tmp_path / "api", ocr_cache_dir=tmp_path / "cache", ocr_backend=_low_confidence_ocr(digital), llm=None)
+    client = TestClient(create_app(cfg))
+    store = client.app.state.store
+    assert store.approved_descriptions() == []
+    with open(scan, "rb") as f:
+        sid = client.post("/statements", files={"file": (scan.name, f, "application/pdf")}).json()["id"]
+    assert store.approved_descriptions() == []                 # not approved, so not trusted
+    store.approve(sid)
+    names = store.approved_descriptions()
+    assert names and all(isinstance(n, str) for n in names)
+    assert store.approved_descriptions(exclude=sid) == []
+
+
+def test_the_probe_reports_the_vocabulary_baselines(pdf):
+    from stmtai.llm import probe
+    cases = probe.build_cases(Path(pdf).parent, n_damaged=8, n_clean=4, seed=3)
+    own, pooled = probe.vocabulary_only(cases), probe.vocabulary_only(cases, True)
+    assert pooled["restored"] >= own["restored"] and pooled["clean_changed"] == 0

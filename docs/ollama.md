@@ -37,7 +37,11 @@ reports how many the model restores and how many it wrongly changes:
 ```
 python -m stmtai.llm.probe --model qwen2.5:3b --out data/runs/probe_3b
 python -m stmtai.llm.probe --model llama3.1:8b --out data/runs/probe_8b
+python -m stmtai.llm.probe --model llama3.1:8b --hints --out data/runs/probe_8b_hints   # also shows names seen elsewhere
 ```
+
+Every probe report also lists two no-model baselines (the statement's own repeated names, and names seen on other
+statements), so a model has to beat those to be worth its cost.
 
 To switch it on in the app:
 

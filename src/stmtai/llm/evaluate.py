@@ -32,14 +32,15 @@ def _new() -> dict[str, int]:
     return defaultdict(int)
 
 
-def evaluate_doc(label: Label, ext, client: Optional[OllamaClient], trace_sink: list[dict], batch_size: int) -> dict[str, Any]:
+def evaluate_doc(label: Label, ext, client: Optional[OllamaClient], trace_sink: list[dict], batch_size: int,
+                 known: Optional[list[str]] = None) -> dict[str, Any]:
     """``client=None`` scores the rules alone."""
     truth = label.statement.transactions
     pairs = {j: i for i, j in align(truth, ext.transactions) if i is not None and j is not None}
     asked = candidates(ext)
     after = ext.model_copy(deep=True)
     trace: list[dict] = []
-    suggest(after, client, batch_size=batch_size, max_cells=10_000, trace=trace)
+    suggest(after, client, batch_size=batch_size, max_cells=10_000, trace=trace, known=known or [])
 
     per: dict[str, dict[str, int]] = defaultdict(_new)
     chars = {"read": 0, "after": 0, "length": 0}
@@ -160,6 +161,8 @@ def main() -> None:
     p.add_argument("--batch", type=int, default=6)
     p.add_argument("--engine", default="rapidocr", help="OCR engine for the extraction (rapidocr, cached:<engine>)")
     p.add_argument("--cache", type=Path, default=Path("data/llm_cache"), help="stores model replies; delete to re-ask")
+    p.add_argument("--pool", action="store_true",
+                   help="treat the other documents' true descriptions as approved statements the names can be learned from")
     p.add_argument("--no-model", action="store_true", help="score the rules alone; Ollama is not needed")
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args()
@@ -177,6 +180,7 @@ def main() -> None:
     from ..extract.ocr import get_backend
 
     backend = get_backend(args.engine)
+    all_labels = {lp.stem: Label.model_validate_json(lp.read_text(encoding="utf-8")) for lp in sorted(args.data.glob("*.json"))}
     docs: list[dict] = []
     failed = 0
     trace: list[dict] = []
@@ -189,7 +193,8 @@ def main() -> None:
             break
         try:
             ext = extract_pdf(pdf, ocr_backend=backend)
-            docs.append(evaluate_doc(label, ext, client, trace, args.batch))
+            known = [t.description for k, lb in all_labels.items() if k != lp.stem for t in lb.statement.transactions] if args.pool else []
+            docs.append(evaluate_doc(label, ext, client, trace, args.batch, known))
             print(f"{label.doc_id}: done ({len(docs)} documents)", flush=True)
         except LLMUnavailable:
             raise
