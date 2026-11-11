@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import type { StatementSummary } from "../types";
 
 function when(iso: string): string {
@@ -12,6 +13,7 @@ export function StatementList() {
   const [error, setError] = useState<string | null>(null);
   const [over, setOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [doomed, setDoomed] = useState<StatementSummary | null>(null);
   const picker = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => api.list().then(setItems).catch((e: Error) => setError(e.message)), []);
@@ -37,7 +39,7 @@ export function StatementList() {
   }
 
   async function remove(s: StatementSummary) {
-    if (!window.confirm(`Delete ${s.filename}? Its corrections are deleted too.`)) return;
+    setDoomed(null);
     try { await api.remove(s.id); await load(); } catch (e) { setError(e instanceof Error ? e.message : "Delete failed."); }
   }
 
@@ -80,12 +82,16 @@ export function StatementList() {
                 </div>
                 <div className="meta">{s.rows != null ? `${s.rows} rows` : ""}</div>
                 {s.status === "failed" && <p className="why">{s.error}</p>}
-                <button className="btn small ghost" onClick={() => void remove(s)}>Delete</button>
+                <button className="btn small ghost" onClick={() => setDoomed(s)}>Delete</button>
               </li>
             ))}
           </ul>
         )}
       </div>
+      {doomed && (
+        <ConfirmDialog title="Delete this statement?" confirmLabel="Delete" onCancel={() => setDoomed(null)} onConfirm={() => void remove(doomed)}
+          detail={`${doomed.filename} and every correction made on it will be removed, and its numbers will leave the Dashboard, Ask and Quality. This can't be undone. You can upload the PDF again.`} />
+      )}
     </>
   );
 }

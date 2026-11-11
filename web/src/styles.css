@@ -287,3 +287,16 @@ code { font: 600 12.5px ui-monospace, Consolas, monospace; background: var(--sof
   .bt-grow, .bt-grow.wide { grid-template-columns: 1fr; gap: 4px; } .bt-grow b { text-align: left; }
   .bt-askbox form { flex-direction: column; } .bt-go { padding: 14px; }
 }
+
+/* ===== in-app confirm dialog ===== */
+.bt-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(22, 17, 58, 0.55); display: grid; place-items: center; padding: 20px; }
+.bt-dialog { background: #fff; border-radius: 28px; padding: 28px; width: min(440px, 100%); box-shadow: 0 24px 60px rgba(22, 17, 58, 0.35); }
+.bt-dialog h2 { font: 700 20px/1.2 var(--display); letter-spacing: -0.02em; }
+.bt-dialog p { margin-top: 12px; color: var(--muted); line-height: 1.55; overflow-wrap: anywhere; }
+.bt-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.bt-dialog-actions button { border: 0; border-radius: 99px; padding: 12px 24px; font: 700 14px var(--body); }
+.bt-dlg-cancel { background: var(--soft); color: var(--ink); }
+.bt-dlg-cancel:hover { background: #d9d2fb; }
+.bt-dlg-danger { background: var(--coral); color: var(--ink); }
+.bt-dlg-danger:hover { background: #ff6a44; }
+@media (max-width: 480px) { .bt-dialog-actions { flex-direction: column-reverse; } .bt-dialog-actions button { width: 100%; } }
