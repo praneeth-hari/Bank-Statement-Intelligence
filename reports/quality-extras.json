@@ -1,0 +1,15 @@
+{
+  "source": "README, step 4 (the dropped-letter probe) and step 8 (the question evaluation). These runs need a local Ollama model, so they are recorded here, not re-run by the app.",
+  "names": [
+    {"id": "qwen-text", "label": "qwen2.5:3b, text only", "restored": 5, "of": 60, "wrongly_changed": 3, "controls": 30, "uses_model": true},
+    {"id": "llama-text", "label": "llama3.1:8b, text only", "restored": 10, "of": 60, "wrongly_changed": 0, "controls": 30, "uses_model": true},
+    {"id": "own-names", "label": "The statement's own repeated names, no model", "restored": 10, "of": 60, "wrongly_changed": 0, "controls": 30, "uses_model": false},
+    {"id": "vocabulary", "label": "Names seen on other statements, no model", "restored": 25, "of": 60, "wrongly_changed": 0, "controls": 30, "uses_model": false},
+    {"id": "llama-hints", "label": "llama3.1:8b given those names as hints", "restored": 27, "of": 60, "wrongly_changed": 0, "controls": 30, "uses_model": true}
+  ],
+  "questions": [
+    {"id": "rules", "label": "Rules, then model", "correct": 42, "of": 42, "wrong": 0, "refused": 0, "in_sample": true},
+    {"id": "model", "label": "Model alone", "correct": 36, "of": 42, "wrong": 6, "refused": 0, "in_sample": false},
+    {"id": "model-checked", "label": "Model alone, with the reading check", "correct": 36, "of": 42, "wrong": 0, "refused": 6, "in_sample": false}
+  ]
+}

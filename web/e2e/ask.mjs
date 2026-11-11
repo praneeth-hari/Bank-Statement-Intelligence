@@ -22,36 +22,40 @@ const ask = async (q) => {
     return el && !document.querySelector("form button")?.textContent?.includes("Asking") && el.isConnected;
   }, q);
   await page.waitForTimeout(150);
-  return page.getByTestId("ask").innerText();
+  return page.locator('[data-testid="answer"],[data-testid="refusal"]').innerText();
 };
 try {
-  await page.goto(base);
+  await page.goto(base + "/#/statements");
   await page.getByTestId("file-input").setInputFiles(pdf);
   const link = page.getByRole("link", { name: /\.pdf/ });
   await link.waitFor({ timeout: 60000 });
+  const id = (await link.getAttribute("href")).split("/s/")[1];
+  await page.goto(base + "/#/ask");
   await page.getByTestId("ask").waitFor();
+  await page.getByText("Approve a statement first").waitFor();
   ok(await page.getByTestId("ask-input").isDisabled(), "the box is disabled until a statement is approved");
 
-  const id = (await link.getAttribute("href")).split("/s/")[1];
   ok((await page.request.post(`${base}/api/statements/${id}/approve`)).ok(), "statement approved");
+  await page.goto(base + "/#/ask");
   await page.reload();
   await page.getByTestId("ask").waitFor();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="ask-input"]').disabled, null, { timeout: 10000 });
   ok(!(await page.getByTestId("ask-input").isDisabled()), "the box is enabled once a statement is approved");
 
   let text = await ask("How much did I spend on UPI in April 2025?");
   ok(text.includes("₹" + expected), `UPI total is ₹${expected}`);
-  ok(text.includes("total debits, of type UPI") && text.includes("read by rules"), "shows how the question was understood");
-  ok((await page.getByRole("link", { name: "Open" }).count()) > 0, "shows the rows behind the answer");
+  ok(text.includes("total debits, of type UPI") && text.toLowerCase().includes("read by rules"), "shows how the question was understood");
+  ok((await page.getByTestId("answer").getByRole("link", { name: "Open" }).count()) > 0, "shows the rows behind the answer");
 
   text = await ask("Spending by category");
-  ok(text.includes("UPI") && text.includes("EMI") && (await page.getByRole("link", { name: "Open" }).count()) === 0, "grouped answer, no stray rows");
+  ok(text.includes("UPI") && text.includes("EMI") && (await page.getByTestId("answer").getByRole("link", { name: "Open" }).count()) === 0, "grouped answer, no stray rows");
 
   text = await ask("Will I be able to afford a car next year?");
   ok(text.includes("No answer.") && (await page.getByTestId("answer").count()) === 0, "an unanswerable question is refused");
 
   text = await ask("outlay on cash machines, please");
   ok(text.includes("I did not understand 'outlay'"), "an unknown word is named, not guessed");
-  if (shots) await page.screenshot({ path: `${shots}/ask.png` });
+  if (shots) await page.screenshot({ path: `${shots}/ask.png`, fullPage: true });
   console.log("\nALL CHECKS PASSED");
 } finally {
   await browser.close();

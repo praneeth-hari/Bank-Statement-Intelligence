@@ -16,6 +16,8 @@ Endpoints (all under the same origin; interactive docs at /docs):
     GET    /statements/{id}/export.csv|json     corrected data
     POST   /query                               ask a question about approved statements; answered with the rows behind it
     GET    /feedback                            how well the confidence scores matched reviewer behaviour
+    GET    /overview                            the dashboard's numbers, from approved statements only
+    GET    /quality                             how far the confidence scores can be trusted, from the saved evaluation reports
 """
 
 from __future__ import annotations
@@ -39,6 +41,8 @@ from ..query.ask import ask as ask_question
 from ..query.data import rows_from_extraction
 from ..query.engine import run as run_query
 from . import service
+from .overview import Source, build_overview
+from .quality import load_quality
 from .service import ACTIONS, Store, apply_corrections, locate
 
 PDF_MAGIC = b"%PDF-"
@@ -54,6 +58,7 @@ class Settings:
     llm: Any = field(default_factory=lambda: from_spec(os.environ.get("STMTAI_LLM")))
     api_key: Optional[str] = field(default_factory=lambda: os.environ.get("STMTAI_API_KEY") or None)
     max_upload_mb: int = int(os.environ.get("STMTAI_MAX_UPLOAD_MB", "25"))
+    reports_dir: Path = field(default_factory=lambda: Path(os.environ.get("STMTAI_REPORTS_DIR", "reports")))
     cors_origins: list[str] = field(default_factory=lambda: [
         o for o in os.environ.get("STMTAI_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if o])
 
@@ -366,6 +371,42 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     @app.get("/feedback", dependencies=[Depends(auth)])
     def feedback() -> dict:
         return summarize(store.corrections())
+
+    @app.get("/overview", dependencies=[Depends(auth)])
+    def overview() -> dict:
+        """The dashboard: totals, months, types, balances and largest debits from approved statements only."""
+        recs = store.list()
+        counts = {"total": len(recs), "approved": 0, "awaiting": 0, "processing": 0, "failed": 0, "fields_to_review": 0}
+        sources = []
+        for rec in recs:
+            if rec["status"] == "processing":
+                counts["processing"] += 1
+                continue
+            if rec["status"] != "ready":
+                counts["failed"] += 1
+                continue
+            view = service.build_view(store.raw(rec["id"]), store.corrections(rec["id"]))
+            if not rec.get("approved_at"):
+                counts["awaiting"] += 1
+                counts["fields_to_review"] += view.meta.get("summary", {}).get("fields_to_review") or 0
+                continue
+            counts["approved"] += 1
+
+            def iso(v: Any) -> Optional[str]:
+                return v.isoformat() if hasattr(v, "isoformat") else None
+
+            sources.append(Source(rec["id"], rec["filename"], view.header_value("bank_name") or None,
+                                  iso(view.header_value("period_start")), iso(view.header_value("period_end")),
+                                  rows_from_extraction(view, rec["id"], rec["filename"])))
+        return build_overview(sources, counts)
+
+    @app.get("/quality", dependencies=[Depends(auth)])
+    def quality() -> dict:
+        """Evaluation numbers from the saved reports, plus what reviewers on this installation actually did."""
+        out = load_quality(cfg.reports_dir)
+        out["reviewer"] = {k: v for k, v in summarize(store.corrections())["overall"].items()
+                           if k in ("reviewed", "flagged_reviewed", "flagged_actually_wrong", "unflagged_corrected")}
+        return out
 
     return app
 

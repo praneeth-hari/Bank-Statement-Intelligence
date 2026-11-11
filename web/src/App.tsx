@@ -1,18 +1,28 @@
 import { useEffect, useState } from "react";
+import { Shell } from "./components/Shell";
+import { AskPage } from "./pages/AskPage";
+import { Dashboard } from "./pages/Dashboard";
+import { QualityPage } from "./pages/QualityPage";
 import { ReviewPage } from "./pages/ReviewPage";
 import { StatementList } from "./pages/StatementList";
-
-function route(): { id: string | null } {
-  const m = /^#\/s\/([\w-]+)/.exec(window.location.hash);
-  return { id: m ? m[1] : null };
-}
+import { parseRoute, type Route } from "./lib/route";
 
 export default function App() {
-  const [current, setCurrent] = useState(route());
+  const [route, setRoute] = useState<Route>(parseRoute(window.location.hash));
   useEffect(() => {
-    const on = () => setCurrent(route());
+    const on = () => { setRoute(parseRoute(window.location.hash)); window.scrollTo(0, 0); };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
-  return current.id ? <ReviewPage key={current.id} id={current.id} /> : <StatementList />;
+
+  // The review screen needs the whole width for the page image, so it keeps its own layout.
+  if (route.name === "review") return <ReviewPage key={route.id} id={route.id} />;
+  return (
+    <Shell route={route}>
+      {route.name === "dashboard" && <Dashboard />}
+      {route.name === "statements" && <StatementList />}
+      {route.name === "ask" && <AskPage />}
+      {route.name === "quality" && <QualityPage />}
+    </Shell>
+  );
 }

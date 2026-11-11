@@ -15,7 +15,7 @@ const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePa
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1.5 });
 page.on("pageerror", (e) => { throw e; });
 try {
-  await page.goto(base);
+  await page.goto(base + "/#/statements");
   await page.getByText("Drop a bank statement PDF here").waitFor();
   await page.getByTestId("file-input").setInputFiles(pdf);
   await page.getByRole("link", { name: /scan_medium\.pdf/ }).waitFor({ timeout: 120000 });

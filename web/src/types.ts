@@ -83,3 +83,39 @@ export interface QueryResponse {
   groups?: { key: string; value: string }[];
   rows?: QueryRow[];
 }
+
+export interface StatementCounts { total: number; approved: number; awaiting: number; processing: number; failed: number; fields_to_review: number }
+
+export interface Overview {
+  has_data: boolean;
+  statements: StatementCounts;
+  totals: { debit: string; credit: string; transactions: number; debits: number; credits: number };
+  by_month: { month: string; debit: string }[];
+  by_type: { type: string; debit: string; count: number }[];
+  balances: {
+    statement_id: string; filename: string; bank: string | null; period_start: string; period_end: string;
+    first_date: string; last_date: string; first_balance: string; last_balance: string; rows: number;
+  }[];
+  largest_debits: { statement_id: string; filename: string; row: number; date: string; description: string; debit: string }[];
+  notes: string[];
+}
+
+export interface QualityCondition {
+  id: "digital" | "light" | "medium" | "heavy";
+  label: string; docs: number | null; rows: number | null;
+  fields: number; flagged: number; wrong: number; caught: number; missed: number; missed_by_field: Record<string, number>;
+  accuracy: number | null; flag_rate: number | null; error_recall: number | null;
+  outcomes: { trusted_right: number; flagged_fine: number; flagged_wrong: number; trusted_wrong: number };
+}
+
+export interface Quality {
+  available: boolean;
+  conditions: QualityCondition[];
+  headline: QualityCondition | null;
+  names: { id: string; label: string; restored: number; of: number; wrongly_changed: number; controls: number; uses_model: boolean }[];
+  questions: { id: string; label: string; correct: number; of: number; wrong: number; refused: number; in_sample: boolean }[];
+  extras_source?: string | null;
+  threshold: number;
+  note: string;
+  reviewer: { reviewed: number; flagged_reviewed: number; flagged_actually_wrong: number; unflagged_corrected: number };
+}

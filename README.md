@@ -140,6 +140,8 @@ python -m stmtai.api                      # http://127.0.0.1:8000, interactive d
 | `POST /statements/{id}/approve` | Sign off. Refused (`409`) while cells still need review, unless `?force=true`. Approved statements are frozen until reopened. |
 | `GET /statements/{id}/export.csv` / `.json` | Corrected data, with a header saying how many fields were never reviewed. |
 | `POST /query` | Ask a question in plain English about **approved** statements. Returns the answer, how the question was understood, and the exact rows behind it. |
+| `GET /overview` | Totals, spending by month and type, balance per statement and largest debits, from **approved** statements only. Exact two-decimal strings. |
+| `GET /quality` | The evaluation numbers behind the Quality page, read from the committed reports (`STMTAI_REPORTS_DIR`). A missing report is reported as missing. |
 | `GET /feedback` | How well the confidence scores matched what reviewers actually did. |
 
 Design decisions worth knowing:
@@ -183,12 +185,38 @@ and should never have to work out *why* a cell is flagged.
 - **Keyboard first:** Enter accepts, E edits, K keeps, arrows move, U undoes. Every action can be undone.
 - **Approve is locked until the queue is empty**; approved statements are frozen until reopened.
 
-Verified two ways: 15 unit tests for the arithmetic, queue ordering, geometry and answer formatting (`npm test`), and an
+Verified two ways: unit tests for the arithmetic, queue ordering, geometry and answer formatting (`npm test`), and an
 end-to-end run in a real browser against the real API (`node web/e2e/smoke.mjs <scan.pdf>`) that uploads a
 scan, accepts a suggestion, undoes it, bulk-confirms, rejects bad input, works the queue to zero, approves and
 exports.
 
 Not built yet: inserting a row the OCR dropped, per-user accounts, and drawing a box to re-read a region.
+
+## The dashboard, Ask and Quality screens (step 9)
+
+![Dashboard](docs/ui/dashboard.jpg)
+
+The review screen now sits inside a small app with a sidebar: **Dashboard**, **Statements**, **Ask** and **Quality**.
+
+- **Dashboard.** What you spent and received, spending by month, where it went by transaction type, the balance
+  of each statement and the largest debits. It counts approved statements only, so a total is never built on cells
+  nobody checked.
+- **Ask.** The plain-English question box from step 8 on its own page: the answer, how the question was read, and
+  the rows behind it. The last few questions are kept in this browser only.
+- **Quality.** How far the confidence scores can be trusted: wrong fields flagged, wrong fields that got through,
+  every field drawn as one square, and how scans of different quality compare. These numbers are read from the
+  saved reports in `reports/`, measured on synthetic statements. They are not computed on anyone's statements.
+
+![Ask](docs/ui/ask.jpg)
+![Quality](docs/ui/quality.jpg)
+
+Honesty rules the screens follow, each covered by a test: money is added as exact decimals and shown as written,
+never as rounded floats; totals across several statements say that they may be different accounts, and balances are
+listed per statement, never summed; a month with no statement is shown as a gap, never as zero; a missing report is
+shown as "not available", never replaced by a number.
+
+Tests: `tests/test_overview.py` (the numbers against plain loops over the true transactions) and 27 in `web/`
+(`npm test`). The browser checks are `web/e2e/smoke.mjs` (review flow, needs a scan) and `web/e2e/ask.mjs`.
 
 ## The LLM fallback (step 7)
 
@@ -513,7 +541,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             290 Python tests (plus 15 in web/), including negative controls for the evaluator itself
+tests/             301 Python tests (plus 27 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

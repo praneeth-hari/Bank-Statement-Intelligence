@@ -132,7 +132,7 @@ export function ReviewPage({ id }: { id: string }) {
   return (
     <>
       <header className="top">
-        <nav className="crumb"><a href="#/">Statements</a><span>/</span><b>{stmt.filename}</b></nav>
+        <nav className="crumb"><a href="#/statements">Statements</a><span>/</span><b>{stmt.filename}</b></nav>
         {review.reconciles
           ? <span className="chip good"><i />Balance adds up on all {rows} rows</span>
           : <span className="chip bad"><i />{breaks > 0 ? `Balance does not add up on ${breaks} ${breaks === 1 ? "row" : "rows"}` : "Closing balance does not match"}</span>}
@@ -198,7 +198,7 @@ function Message({ title, body }: { title: string; body: string }) {
       <section className="card message">
         <h2>{title}</h2>
         <p>{body}</p>
-        <a className="btn" href="#/">Back to statements</a>
+        <a className="btn" href="#/statements">Back to statements</a>
       </section>
     </main>
   );
