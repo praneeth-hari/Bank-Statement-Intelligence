@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { SamplesCard } from "../components/Samples";
+import { announceChange } from "../components/Shell";
 import type { StatementSummary } from "../types";
 
 function when(iso: string): string {
@@ -32,7 +34,7 @@ export function StatementList() {
     setUploading(true);
     try {
       for (const f of Array.from(files)) await api.upload(f);
-      await load();
+      await load(); announceChange();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed.");
     } finally { setUploading(false); }
@@ -40,7 +42,7 @@ export function StatementList() {
 
   async function remove(s: StatementSummary) {
     setDoomed(null);
-    try { await api.remove(s.id); await load(); } catch (e) { setError(e instanceof Error ? e.message : "Delete failed."); }
+    try { await api.remove(s.id); await load(); announceChange(); } catch (e) { setError(e instanceof Error ? e.message : "Delete failed."); }
   }
 
   return (
@@ -62,6 +64,7 @@ export function StatementList() {
         {error && <p className="error" role="alert">{error}</p>}
 
         {items && items.length === 0 && <p className="empty">No statements yet. Upload one to see what was extracted and what needs a look.</p>}
+        {items && items.length === 0 && <SamplesCard onLoaded={() => void load()} />}
         {items && items.length > 0 && (
           <ul className="list">
             {items.map((s) => (

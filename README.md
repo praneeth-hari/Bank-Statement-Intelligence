@@ -142,6 +142,8 @@ python -m stmtai.api                      # http://127.0.0.1:8000, interactive d
 | `POST /query` | Ask a question in plain English about **approved** statements. Returns the answer, how the question was understood, and the exact rows behind it. |
 | `GET /overview` | Totals, spending by month and type, balance per statement and largest debits, from **approved** statements only. Exact two-decimal strings. |
 | `GET /quality` | The evaluation numbers behind the Quality page, read from the committed reports (`STMTAI_REPORTS_DIR`). A missing report is reported as missing. |
+| `GET /transactions.csv` | Every transaction on **approved** statements as one CSV (exact two-decimal money; text that a spreadsheet could run as a formula is neutralised). |
+| `GET /samples`, `POST /samples` | `/health` reports how many bundled sample statements exist; `POST` loads them and approves the ones with nothing to review. Already-loaded files are skipped. |
 | `GET /feedback` | How well the confidence scores matched what reviewers actually did. |
 
 Design decisions worth knowing:
@@ -216,7 +218,21 @@ listed per statement, never summed; a month with no statement is shown as a gap,
 shown as "not available", never replaced by a number.
 
 Tests: `tests/test_overview.py` (the numbers against plain loops over the true transactions) and 27 in `web/`
-(`npm test`). The browser checks are `web/e2e/smoke.mjs` (review flow, needs a scan) and `web/e2e/ask.mjs`.
+(`npm test`). The browser checks are `web/e2e/smoke.mjs` (review flow, needs a scan), `web/e2e/ask.mjs` and
+`web/e2e/samples.mjs` (samples, sidebar and the CSV download, from an empty install).
+
+### Trying it without your own PDF
+
+On an empty install the Dashboard and Statements pages offer **Load sample statements**: the made-up documents in
+`samples/` are read, and the ones with nothing left to review are approved, so every page has something to show. They
+belong to no real person or account. The Dashboard has a **Download CSV** button with every approved transaction
+(`date, description, reference, debit, credit, balance, type, statement, statement_id, row`).
+
+### Privacy
+
+Files are stored under `data/` on the machine running the app and are never sent anywhere. The sidebar says so, and
+says whether the optional language model is on. That model is Ollama, which also runs locally. Nothing in the app
+calls an outside service.
 
 ## The LLM fallback (step 7)
 
@@ -541,7 +557,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             301 Python tests (plus 27 in web/), including negative controls for the evaluator itself
+tests/             309 Python tests (plus 27 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

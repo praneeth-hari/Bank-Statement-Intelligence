@@ -300,3 +300,15 @@ code { font: 600 12.5px ui-monospace, Consolas, monospace; background: var(--sof
 .bt-dlg-danger { background: var(--coral); color: var(--ink); }
 .bt-dlg-danger:hover { background: #ff6a44; }
 @media (max-width: 480px) { .bt-dialog-actions { flex-direction: column-reverse; } .bt-dialog-actions button { width: 100%; } }
+
+/* ===== samples, privacy note, download ===== */
+.bt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.bt-dl { background: var(--ink); color: #fff; border-radius: 99px; padding: 11px 22px; font: 700 14px var(--body); text-decoration: none; margin-top: 8px; }
+.bt-dl:hover { background: #2a2260; }
+.bt-samples p { margin-top: 8px; max-width: 560px; }
+.bt-dark { margin-top: 16px; background: var(--ink); color: #fff; border: 0; border-radius: 99px; padding: 12px 26px; font: 700 14px var(--body); }
+.bt-dark:hover:not(:disabled) { background: #2a2260; }
+.bt-dark:disabled { opacity: 0.65; }
+.bt-priv { margin-top: 12px; font-size: 12.5px; line-height: 1.55; color: #a9a3d8; padding: 0 8px; }
+.bt-priv b { display: block; color: var(--lime); font-size: 13px; }
+@media (max-width: 860px) { .bt-priv { display: none; } }

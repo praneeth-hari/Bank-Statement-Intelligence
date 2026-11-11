@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { Donut, MonthBars } from "../components/charts";
+import { SamplesCard } from "../components/Samples";
 import { Empty, Tile } from "../components/Shell";
 import { bankName, count, rupees, shortDate } from "../lib/format";
 import { parsePaise } from "../lib/money";
@@ -9,7 +10,8 @@ import type { Overview } from "../types";
 export function Dashboard() {
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => { api.overview().then(setData).catch((e: Error) => setError(e.message)); }, []);
+  const load = useCallback(() => api.overview().then(setData).catch((e: Error) => setError(e.message)), []);
+  useEffect(() => { void load(); }, [load]);
 
   if (error) return <p className="error" role="alert">{error}</p>;
   if (!data) return <p className="loading">Adding up your statements…</p>;
@@ -24,6 +26,7 @@ export function Dashboard() {
             ? <>Upload a statement to see what was extracted. Then approve it, and its numbers appear here. <a href="#/statements">Go to Statements</a></>
             : <>{s.awaiting} {s.awaiting === 1 ? "statement is" : "statements are"} waiting for review. Numbers here use approved statements only, so a total is never built on cells nobody checked. <a href="#/statements">Review a statement</a></>}
         </Empty>
+        <SamplesCard onLoaded={() => void load()} />
       </>
     );
   }
@@ -31,7 +34,10 @@ export function Dashboard() {
   const t = data.totals;
   return (
     <>
-      <h1 className="bt-h1">Your money, {s.approved} {s.approved === 1 ? "statement" : "statements"} in.</h1>
+      <div className="bt-head">
+        <h1 className="bt-h1">Your money, {s.approved} {s.approved === 1 ? "statement" : "statements"} in.</h1>
+        <a className="bt-dl" href={api.transactionsUrl()} download data-testid="download">Download CSV</a>
+      </div>
       <div className="bt-grid">
         <Tile className="bt-violet c4" data-testid="spent"><div className="bt-label">You spent</div><div className="bt-big">{rupees(t.debit)}</div><p>{count(t.debits)} debits</p></Tile>
         <Tile className="bt-lime c4" data-testid="received"><div className="bt-label">You received</div><div className="bt-big">{rupees(t.credit)}</div><p>{count(t.credits)} credits</p></Tile>

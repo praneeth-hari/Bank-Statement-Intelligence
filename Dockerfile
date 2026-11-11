@@ -20,6 +20,8 @@ COPY pyproject.toml ./
 COPY src/ src/
 # The Quality page reads these saved evaluation reports (synthetic statements only).
 COPY reports/ /app/reports/
+# The one-click sample statements (made-up documents) for the Load samples button.
+COPY samples/ /app/samples/
 # The cache mount keeps downloaded packages between builds, so a cancelled or failed build resumes instead of
 # starting the download again. (Needs BuildKit, which Docker Desktop uses by default.)
 ENV PIP_DEFAULT_TIMEOUT=120 PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -30,6 +32,7 @@ RUN useradd --create-home --uid 10001 app && mkdir /data && chown app /data
 USER app
 ENV STMTAI_WEB_DIR=/app/web \
     STMTAI_REPORTS_DIR=/app/reports \
+    STMTAI_SAMPLES_DIR=/app/samples \
     STMTAI_DATA_DIR=/data \
     STMTAI_OCR_CACHE=/data/ocr_cache \
     STMTAI_CORS_ORIGINS="" \

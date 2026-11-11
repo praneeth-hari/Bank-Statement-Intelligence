@@ -27,6 +27,9 @@ export function MonthBars({ months }: { months: Overview["by_month"] }) {
           );
         })}
       </div>
+      {years.length > 1 && (
+        <ul className="bt-legend">{years.map((y, i) => <li key={y}><i style={{ background: PALETTE[i % 2] }} />{y}</li>)}</ul>
+      )}
       {gaps.length > 0 && (
         <p className="bt-sub">
           No statements for {gaps.map(([a, b]) => (a === b ? monthLabel(a, true) : `${monthLabel(a, true)} to ${monthLabel(b, true)}`)).join(", ")}, so those months are skipped.

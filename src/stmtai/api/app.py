@@ -18,6 +18,8 @@ Endpoints (all under the same origin; interactive docs at /docs):
     GET    /feedback                            how well the confidence scores matched reviewer behaviour
     GET    /overview                            the dashboard's numbers, from approved statements only
     GET    /quality                             how far the confidence scores can be trusted, from the saved evaluation reports
+    GET    /transactions.csv                    every transaction on approved statements, as one CSV
+    GET    /samples, POST /samples              the bundled synthetic statements; POST loads them (and approves the ones with nothing to review)
 """
 
 from __future__ import annotations
@@ -44,6 +46,7 @@ from . import service
 from .overview import Source, build_overview
 from .quality import load_quality
 from .service import ACTIONS, Store, apply_corrections, locate
+from .transactions_export import transactions_csv
 
 PDF_MAGIC = b"%PDF-"
 
@@ -58,6 +61,7 @@ class Settings:
     llm: Any = field(default_factory=lambda: from_spec(os.environ.get("STMTAI_LLM")))
     api_key: Optional[str] = field(default_factory=lambda: os.environ.get("STMTAI_API_KEY") or None)
     max_upload_mb: int = int(os.environ.get("STMTAI_MAX_UPLOAD_MB", "25"))
+    samples_dir: Path = field(default_factory=lambda: Path(os.environ.get("STMTAI_SAMPLES_DIR", "samples")))
     reports_dir: Path = field(default_factory=lambda: Path(os.environ.get("STMTAI_REPORTS_DIR", "reports")))
     cors_origins: list[str] = field(default_factory=lambda: [
         o for o in os.environ.get("STMTAI_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if o])
@@ -129,10 +133,52 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             out.update(rows=s.get("rows"), to_review=s.get("fields_to_review"), reconciles=s.get("reconciles"))
         return out
 
+    def sample_files() -> list[Path]:
+        """The digital sample PDFs (scans are slow to read, so the one-click demo leaves them out)."""
+        if not cfg.samples_dir.is_dir():
+            return []
+        return sorted(p for p in cfg.samples_dir.glob("*.pdf") if "__scan_" not in p.name)
+
     @app.get("/health")
     def health() -> dict:
         return {"status": "ok", "ocr_enabled": cfg.ocr, "auth": bool(cfg.api_key),
-                "llm": cfg.llm.name if cfg.llm is not None else None}
+                "llm": cfg.llm.name if cfg.llm is not None else None, "samples": len(sample_files())}
+
+    @app.post("/samples", dependencies=[Depends(auth)])
+    def load_samples() -> dict:
+        """Load the bundled synthetic statements. A statement with nothing left to review is approved so the
+        Dashboard fills at once; one that still needs a look stays waiting. Files already loaded are skipped."""
+        have = {r["filename"] for r in store.list()}
+        out = []
+        for path in sample_files():
+            if path.name in have:
+                out.append({"filename": path.name, "result": "already loaded"})
+                continue
+            sid = store.create(path.name)
+            store.pdf_path(sid).write_bytes(path.read_bytes())
+            process(sid)
+            rec = store.get(sid)
+            approved = False
+            if rec and rec["status"] == "ready":
+                view = service.build_view(store.raw(sid), store.corrections(sid))
+                if not view.meta["summary"]["fields_to_review"]:
+                    store.approve(sid)
+                    approved = True
+            out.append({"filename": path.name, "id": sid, "result": "approved" if approved else (rec or {}).get("status", "failed")})
+        return {"statements": out, "loaded": sum(1 for o in out if o["result"] != "already loaded")}
+
+    @app.get("/transactions.csv", dependencies=[Depends(auth)], response_model=None)
+    def transactions_export() -> Response:
+        """Every transaction on approved statements. Approved only, like the Dashboard it is downloaded from."""
+        rows = []
+        for rec in store.list():
+            if rec.get("approved_at") and rec["status"] == "ready":
+                view = service.build_view(store.raw(rec["id"]), store.corrections(rec["id"]))
+                rows += rows_from_extraction(view, rec["id"], rec["filename"])
+        if not rows:
+            raise HTTPException(409, "No approved statements to export. Review and approve a statement first.")
+        return Response(transactions_csv(rows), media_type="text/csv", headers={
+            "Content-Disposition": 'attachment; filename="approved-transactions.csv"'})
 
     @app.post("/statements", status_code=202, dependencies=[Depends(auth)])
     def upload(background: BackgroundTasks, file: UploadFile = File(...)) -> dict:

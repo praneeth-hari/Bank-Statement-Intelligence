@@ -119,3 +119,6 @@ export interface Quality {
   note: string;
   reviewer: { reviewed: number; flagged_reviewed: number; flagged_actually_wrong: number; unflagged_corrected: number };
 }
+
+export interface Health { status: string; ocr_enabled: boolean; auth: boolean; llm: string | null; samples: number }
+export interface SamplesResult { loaded: number; statements: { filename: string; id?: string; result: string }[] }
