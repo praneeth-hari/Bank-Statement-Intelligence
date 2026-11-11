@@ -41,3 +41,10 @@ export function displayValue(field: string, value: string | null, fallback = "")
   if (DATE_FIELDS.has(field)) return formatDate(value) ?? value;
   return value;
 }
+
+/** Integer paise back to a two-decimal string, exactly: 3010n -> "30.10". */
+export function fromPaise(paise: bigint): string {
+  const sign = paise < 0n ? "-" : "";
+  const abs = paise < 0n ? -paise : paise;
+  return `${sign}${abs / 100n}.${(abs % 100n).toString().padStart(2, "0")}`;
+}

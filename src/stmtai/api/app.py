@@ -18,15 +18,20 @@ Endpoints (all under the same origin; interactive docs at /docs):
     GET    /feedback                            how well the confidence scores matched reviewer behaviour
     GET    /overview                            the dashboard's numbers, from approved statements only
     GET    /quality                             how far the confidence scores can be trusted, from the saved evaluation reports
+    GET    /transactions                        filter, sort and page the transactions of approved statements
+    GET    /categories, POST /categories, DELETE /categories/{id}   your own "contains this text, call it that" rules
+    GET    /recurring                           payments that repeat across months
     GET    /transactions.csv                    every transaction on approved statements, as one CSV
     GET    /samples, POST /samples              the bundled synthetic statements; POST loads them (and approves the ones with nothing to review)
 """
 
 from __future__ import annotations
 
+import datetime as dt
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from decimal import Decimal
 from typing import Any, Literal, Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
@@ -43,6 +48,10 @@ from ..query.ask import ask as ask_question
 from ..query.data import rows_from_extraction
 from ..query.engine import run as run_query
 from . import service
+from .categories import STARTERS, UNCATEGORISED, category_of, first_rule
+from .recurring import find_recurring
+from .transactions import Filters
+from .transactions import run as run_transactions
 from .overview import Source, build_overview
 from .quality import load_quality
 from .service import ACTIONS, Store, apply_corrections, locate
@@ -75,6 +84,11 @@ class QueryIn(BaseModel):
     question: str
     statement_ids: Optional[list[str]] = None  # default: every approved statement
     parser: Literal["auto", "rules"] = "auto"  # "rules" never calls the model, even when one is configured
+
+
+class RuleIn(BaseModel):
+    pattern: str   # text to look for in a description, ignoring case
+    category: str
 
 
 class CorrectionIn(BaseModel):
@@ -167,14 +181,68 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             out.append({"filename": path.name, "id": sid, "result": "approved" if approved else (rec or {}).get("status", "failed")})
         return {"statements": out, "loaded": sum(1 for o in out if o["result"] != "already loaded")}
 
-    @app.get("/transactions.csv", dependencies=[Depends(auth)], response_model=None)
-    def transactions_export() -> Response:
-        """Every transaction on approved statements. Approved only, like the Dashboard it is downloaded from."""
-        rows = []
+    def approved_rows() -> list:
+        """Rows of every approved statement, oldest upload last as the store lists them. Unapproved ones never appear."""
+        rows: list = []
         for rec in store.list():
             if rec.get("approved_at") and rec["status"] == "ready":
                 view = service.build_view(store.raw(rec["id"]), store.corrections(rec["id"]))
                 rows += rows_from_extraction(view, rec["id"], rec["filename"])
+        return rows
+
+    @app.get("/transactions", dependencies=[Depends(auth)])
+    def transactions(q: Optional[str] = Query(None, max_length=100), date_from: Optional[dt.date] = None,
+                     date_to: Optional[dt.date] = None, min_amount: Optional[Decimal] = Query(None, ge=0),
+                     max_amount: Optional[Decimal] = Query(None, ge=0), type_: Optional[str] = Query(None, alias="type"),
+                     direction: Literal["any", "debit", "credit"] = "any", statement_id: Optional[str] = None,
+                     category: Optional[str] = None, sort: Literal["date", "amount"] = "date",
+                     order: Literal["asc", "desc"] = "desc", limit: int = Query(100, ge=1, le=500),
+                     offset: int = Query(0, ge=0)) -> dict:
+        """Search approved statements. Every row links back to its statement; totals of the matches are exact and not netted."""
+        f = Filters(q=(q or "").strip() or None, date_from=date_from, date_to=date_to, min_amount=min_amount,
+                    max_amount=max_amount, type=type_, direction=direction, statement_id=statement_id,
+                    category=category, sort=sort, order=order)
+        return run_transactions(approved_rows(), store.rules(), f, limit, offset)
+
+    @app.get("/categories", dependencies=[Depends(auth)])
+    def categories() -> dict:
+        rules, rows = store.rules(), approved_rows()
+        have = {r.pattern.casefold() for r in rules}
+        suggestions = []
+        for pattern, cat in STARTERS:
+            n = sum(1 for r in rows if pattern.casefold() in r.description.casefold() and first_rule(r.description, rules) is None)   # only what it would newly categorise
+            if n and pattern.casefold() not in have:
+                suggestions.append({"pattern": pattern, "category": cat, "matches": n})
+        wins = [first_rule(r.description, rules) for r in rows]
+        sorted_rules = [{"id": r.id, "pattern": r.pattern, "category": r.category,
+                         "matches": sum(1 for w in wins if w is not None and w.id == r.id)} for r in rules]
+        return {"rules": sorted_rules, "suggestions": suggestions,
+                "coverage": {"total": len(rows), "categorised": sum(1 for r in rows if category_of(r.description, rules) != UNCATEGORISED)}}
+
+    @app.post("/categories", status_code=201, dependencies=[Depends(auth)])
+    def add_category(body: RuleIn) -> dict:
+        try:
+            rule = store.add_rule(body.pattern, body.category)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        except KeyError:
+            raise HTTPException(409, "There is already a rule for that text. Remove it first to change its category.")
+        return {"id": rule.id, "pattern": rule.pattern, "category": rule.category}
+
+    @app.delete("/categories/{rid}", status_code=204, dependencies=[Depends(auth)], response_model=None)
+    def delete_category(rid: int) -> Response:
+        if not store.delete_rule(rid):
+            raise HTTPException(404, "No such rule.")
+        return Response(status_code=204)
+
+    @app.get("/recurring", dependencies=[Depends(auth)])
+    def recurring() -> dict:
+        return find_recurring(approved_rows())
+
+    @app.get("/transactions.csv", dependencies=[Depends(auth)], response_model=None)
+    def transactions_export() -> Response:
+        """Every transaction on approved statements. Approved only, like the Dashboard it is downloaded from."""
+        rows = approved_rows()
         if not rows:
             raise HTTPException(409, "No approved statements to export. Review and approve a statement first.")
         return Response(transactions_csv(rows), media_type="text/csv", headers={
@@ -444,7 +512,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             sources.append(Source(rec["id"], rec["filename"], view.header_value("bank_name") or None,
                                   iso(view.header_value("period_start")), iso(view.header_value("period_end")),
                                   rows_from_extraction(view, rec["id"], rec["filename"])))
-        return build_overview(sources, counts)
+        return build_overview(sources, counts, store.rules())
 
     @app.get("/quality", dependencies=[Depends(auth)])
     def quality() -> dict:

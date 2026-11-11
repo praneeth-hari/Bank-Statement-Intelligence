@@ -9,6 +9,8 @@ export const announceChange = () => window.dispatchEvent(new Event(CHANGED));
 
 const ITEMS: { name: Route["name"]; label: string; href: string }[] = [
   { name: "dashboard", label: "Dashboard", href: "#/" },
+  { name: "transactions", label: "Transactions", href: "#/transactions" },
+  { name: "recurring", label: "Recurring", href: "#/recurring" },
   { name: "statements", label: "Statements", href: "#/statements" },
   { name: "ask", label: "Ask", href: "#/ask" },
   { name: "quality", label: "Quality", href: "#/quality" },

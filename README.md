@@ -142,6 +142,9 @@ python -m stmtai.api                      # http://127.0.0.1:8000, interactive d
 | `POST /query` | Ask a question in plain English about **approved** statements. Returns the answer, how the question was understood, and the exact rows behind it. |
 | `GET /overview` | Totals, spending by month and type, balance per statement and largest debits, from **approved** statements only. Exact two-decimal strings. |
 | `GET /quality` | The evaluation numbers behind the Quality page, read from the committed reports (`STMTAI_REPORTS_DIR`). A missing report is reported as missing. |
+| `GET /transactions` | Search approved statements: text, dates, amount range, type, direction, statement, category, sort, paging. Totals of the matches are exact and never netted. |
+| `GET/POST /categories`, `DELETE /categories/{id}` | Your own rules ("description contains this text, call it that"), plus suggestions drawn from your statements. |
+| `GET /recurring` | Payments that repeat across months. |
 | `GET /transactions.csv` | Every transaction on **approved** statements as one CSV (exact two-decimal money; text that a spreadsheet could run as a formula is neutralised). |
 | `GET /samples`, `POST /samples` | `/health` reports how many bundled sample statements exist; `POST` loads them and approves the ones with nothing to review. Already-loaded files are skipped. |
 | `GET /feedback` | How well the confidence scores matched what reviewers actually did. |
@@ -217,9 +220,10 @@ never as rounded floats; totals across several statements say that they may be d
 listed per statement, never summed; a month with no statement is shown as a gap, never as zero; a missing report is
 shown as "not available", never replaced by a number.
 
-Tests: `tests/test_overview.py` (the numbers against plain loops over the true transactions) and 27 in `web/`
+Tests: `tests/test_round2.py` (filters, rules and recurring against plain loops over the true transactions), `tests/test_overview.py` (the numbers against plain loops over the true transactions) and 34 in `web/`
 (`npm test`). The browser checks are `web/e2e/smoke.mjs` (review flow, needs a scan), `web/e2e/ask.mjs` and
-`web/e2e/samples.mjs` (samples, sidebar and the CSV download, from an empty install).
+`web/e2e/samples.mjs` (samples, sidebar and the CSV download, from an empty install) and `web/e2e/round2.mjs`
+(search, categories, the Dashboard category view and Recurring).
 
 ### Trying it without your own PDF
 
@@ -227,6 +231,25 @@ On an empty install the Dashboard and Statements pages offer **Load sample state
 `samples/` are read, and the ones with nothing left to review are approved, so every page has something to show. They
 belong to no real person or account. The Dashboard has a **Download CSV** button with every approved transaction
 (`date, description, reference, debit, credit, balance, type, statement, statement_id, row`).
+
+### Search, categories and what repeats
+
+![Transactions](docs/ui/transactions.jpg)
+
+- **Transactions.** Every transaction on approved statements, with filters for text, dates, amount range, money in or out,
+  type, category and statement. The line above the table says how many match and their exact totals, with spent and
+  received side by side and never netted. Each row opens the statement it came from.
+- **Categories.** You write the rules: *if a description contains this text, use this category.* Capital letters don't
+  matter and the oldest matching rule wins. A transaction no rule matches stays **Uncategorised**, never guessed. A starter
+  list is offered from merchants found in your statements, with how many transactions each would newly cover, and nothing
+  is applied until you click. Once there are rules, the Dashboard's donut can switch between type and your categories.
+- **Recurring.** A payee counts as repeating when it turns up in at least 3 different months and no more than twice in any
+  month, so everyday shopping at one place is not called a subscription. Numbers in descriptions (references, loan and phone
+  numbers) are ignored when matching payees. It shows how many months and payments, the usual day of the month, whether
+  the amount is the same, close or varies, and the exact dates. It only looks at months that have an approved statement,
+  and with fewer than three months it says there is not enough to tell.
+
+![What repeats](docs/ui/recurring.jpg)
 
 ### Privacy
 
@@ -557,7 +580,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             309 Python tests (plus 27 in web/), including negative controls for the evaluator itself
+tests/             330 Python tests (plus 34 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

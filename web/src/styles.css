@@ -312,3 +312,44 @@ code { font: 600 12.5px ui-monospace, Consolas, monospace; background: var(--sof
 .bt-priv { margin-top: 12px; font-size: 12.5px; line-height: 1.55; color: #a9a3d8; padding: 0 8px; }
 .bt-priv b { display: block; color: var(--lime); font-size: 13px; }
 @media (max-width: 860px) { .bt-priv { display: none; } }
+
+/* ===== transactions, categories, recurring ===== */
+.bt-seg { display: inline-flex; background: rgba(255,255,255,0.65); border-radius: 99px; padding: 3px; }
+.bt-seg button { border: 0; background: transparent; border-radius: 99px; padding: 5px 14px; font: 700 12.5px var(--body); color: var(--ink); }
+.bt-seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.bt-filters { display: flex; flex-direction: column; gap: 14px; }
+.bt-frow { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: flex-end; }
+.bt-filters label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 700; color: var(--muted); min-width: 130px; }
+.bt-filters label.grow { flex: 1 1 240px; } .bt-filters label.narrow { min-width: 96px; width: 110px; }
+.bt-filters input, .bt-filters select { background: var(--ground); border: 2px solid transparent; border-radius: 14px; padding: 10px 14px; font: 600 14px var(--body); color: var(--ink); min-width: 0; }
+.bt-filters input:focus-visible, .bt-filters select:focus-visible { border-color: var(--vio); outline: none; }
+.bt-filters input[aria-invalid="true"] { border-color: var(--coral); }
+.bt-sum { margin: 2px 6px; line-height: 1.6; color: var(--muted); max-width: 900px; } .bt-sum b { color: var(--ink); }
+.bt-txtile { padding: 14px 22px 18px; }
+.bt-scroll { overflow-x: auto; }
+.bt-tx { min-width: 720px; } .bt-tx td { padding: 11px 10px 11px 0; } .bt-amt.in { color: var(--ok); }
+.bt-cat { background: var(--soft); color: var(--vio); border-radius: 99px; padding: 2px 11px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.bt-cat.none { background: transparent; color: var(--muted); font-weight: 600; padding-left: 0; }
+.bt-pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 14px; color: var(--muted); font-size: 13px; }
+.bt-pager button { border: 0; background: var(--soft); color: var(--ink); border-radius: 99px; padding: 8px 18px; font: 700 13px var(--body); margin-left: 8px; }
+.bt-pager button:disabled { opacity: 0.45; }
+.bt-cats .bt-sub { max-width: 720px; line-height: 1.55; }
+.bt-rules { list-style: none; margin-top: 12px; }
+.bt-rules li { display: flex; align-items: center; gap: 14px; padding: 9px 0; border-bottom: 1.5px dashed var(--line); }
+.bt-rules li span { flex: 1; min-width: 0; overflow-wrap: anywhere; } .bt-rules small { color: var(--muted); }
+.bt-addrule { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 16px; }
+.bt-addrule label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.bt-addrule input { background: var(--ground); border: 2px solid transparent; border-radius: 14px; padding: 10px 14px; font: 600 14px var(--body); color: var(--ink); width: 200px; }
+.bt-addrule input:focus-visible { border-color: var(--vio); outline: none; }
+.bt-addrule .bt-dark { margin-top: 0; }
+.bt-sugg { margin-top: 20px; padding-top: 14px; border-top: 1.5px dashed var(--line); }
+.bt-chips.light button { border-color: var(--vio); color: var(--vio); } .bt-chips.light button:hover:not(:disabled) { background: var(--vio); color: #fff; }
+.bt-rule { font-size: 13px; line-height: 1.5; margin-top: 10px; }
+.bt-rec { list-style: none; }
+.bt-rec li { display: grid; grid-template-columns: minmax(150px, 1.3fr) minmax(190px, 1.5fr) minmax(190px, 1.4fr) 140px; gap: 6px 22px; align-items: center; padding: 16px 0; border-bottom: 1.5px dashed var(--line); }
+.bt-rec li:last-child { border-bottom: 0; }
+.bt-rec small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.bt-rec b.in { color: var(--ok); } .bt-rec .tot { text-align: right; font-feature-settings: "tnum" 1; }
+.bt-rec details { grid-column: 1 / -1; font-size: 13px; } .bt-rec summary { cursor: pointer; color: var(--vio); font-weight: 700; width: fit-content; }
+.bt-rec details p { margin-top: 6px; color: var(--muted); line-height: 1.6; }
+@media (max-width: 860px) { .bt-rec li { grid-template-columns: 1fr 1fr; } .bt-rec .tot { text-align: left; } }

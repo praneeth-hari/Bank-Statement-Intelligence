@@ -232,6 +232,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS statements (
   id TEXT PRIMARY KEY, filename TEXT NOT NULL, status TEXT NOT NULL, error TEXT,
   created TEXT NOT NULL, approved_at TEXT, raw_json TEXT);
+CREATE TABLE IF NOT EXISTS category_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, pattern TEXT NOT NULL, category TEXT NOT NULL, created TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS corrections (
   id INTEGER PRIMARY KEY AUTOINCREMENT, statement_id TEXT NOT NULL REFERENCES statements(id) ON DELETE CASCADE,
   row INTEGER, field TEXT NOT NULL, action TEXT NOT NULL,
@@ -353,6 +355,31 @@ class Store:
             d["was_flagged"], d["had_suggestion"] = bool(d["was_flagged"]), bool(d["had_suggestion"])
             out.append(d)
         return out
+
+    # ----- the user's category rules
+    def rules(self) -> list:
+        from .categories import Rule
+
+        with self._conn() as c:
+            rows = c.execute("SELECT id, pattern, category FROM category_rules ORDER BY id").fetchall()
+        return [Rule(r["id"], r["pattern"], r["category"]) for r in rows]
+
+    def add_rule(self, pattern: str, category: str):
+        from .categories import MAX_RULES, Rule, clean
+
+        pattern, category = clean(pattern, category)
+        with self._conn() as c:
+            have = c.execute("SELECT pattern, category FROM category_rules").fetchall()
+            if len(have) >= MAX_RULES:
+                raise ValueError(f"There can be at most {MAX_RULES} rules. Remove one first.")
+            if any(h["pattern"].casefold() == pattern.casefold() for h in have):
+                raise KeyError(pattern)
+            cur = c.execute("INSERT INTO category_rules(pattern, category, created) VALUES (?,?,?)", (pattern, category, self.now()))
+            return Rule(cur.lastrowid, pattern, category)
+
+    def delete_rule(self, rid: int) -> bool:
+        with self._conn() as c:
+            return c.execute("DELETE FROM category_rules WHERE id=?", (rid,)).rowcount > 0
 
     def delete_correction(self, sid: str, cid: int) -> bool:
         with self._conn() as c:

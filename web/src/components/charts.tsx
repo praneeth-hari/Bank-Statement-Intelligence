@@ -1,4 +1,4 @@
-import { monthGaps, monthLabel, PALETTE, ratio, share, typeColour, typeName } from "../lib/format";
+import { monthGaps, monthLabel, PALETTE, ratio, share } from "../lib/format";
 import type { Overview, QualityCondition } from "../types";
 
 const HEIGHT = 170;
@@ -44,29 +44,31 @@ function shortK(v: string): string {
   return n >= 100000 ? `${(n / 100000).toFixed(2)}L` : `${Math.round(n / 1000)}K`;
 }
 
-/** A ring split by transaction type; the legend beside it carries the exact shares. */
-export function Donut({ types, total }: { types: Overview["by_type"]; total: string }) {
+export interface Slice { key: string; label: string; debit: string; colour: string }
+
+/** A ring split into slices; the legend beside it carries the exact shares. */
+export function Donut({ slices, total, what }: { slices: Slice[]; total: string; what: string }) {
   const R = 70, C = 2 * Math.PI * R;
   let offset = 0;
-  const top = types[0];
+  const top = slices[0];
   return (
     <div className="bt-donut">
-      <svg width="180" height="180" viewBox="0 0 180 180" role="img" aria-label={`Debits by type, ${top ? typeName(top.type) : "none"} largest`}>
-        {types.map((t) => {
+      <svg width="180" height="180" viewBox="0 0 180 180" role="img" aria-label={`Debits by ${what}, ${top ? top.label : "none"} largest`}>
+        {slices.map((t) => {
           const len = ratio(t.debit, total) * C;
-          const el = <circle key={t.type} r={R} cx="90" cy="90" fill="none" stroke={typeColour(t.type)} strokeWidth="30"
+          const el = <circle key={t.key} r={R} cx="90" cy="90" fill="none" stroke={t.colour} strokeWidth="30"
                              strokeDasharray={`${Math.max(len - 2, 0.8)} ${C}`} strokeDashoffset={-offset} transform="rotate(-90 90 90)" />;
           offset += len;
           return el;
         })}
         {top && <>
           <text x="90" y="88" textAnchor="middle" className="bt-donut-n">{Math.round(Number(share(top.debit, total).replace("<", "")))}%</text>
-          <text x="90" y="108" textAnchor="middle" className="bt-donut-l">{typeName(top.type)}</text>
+          <text x="90" y="108" textAnchor="middle" className="bt-donut-l">{top.label.length > 14 ? top.label.slice(0, 13) + "…" : top.label}</text>
         </>}
       </svg>
       <ul>
-        {types.map((t) => (
-          <li key={t.type}><i style={{ background: typeColour(t.type) }} /><span>{typeName(t.type)}</span><b>{share(t.debit, total)}%</b></li>
+        {slices.map((t) => (
+          <li key={t.key}><i style={{ background: t.colour }} /><span>{t.label}</span><b>{share(t.debit, total)}%</b></li>
         ))}
       </ul>
     </div>

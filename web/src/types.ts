@@ -92,6 +92,7 @@ export interface Overview {
   totals: { debit: string; credit: string; transactions: number; debits: number; credits: number };
   by_month: { month: string; debit: string }[];
   by_type: { type: string; debit: string; count: number }[];
+  by_category: { category: string; debit: string; count: number }[];
   balances: {
     statement_id: string; filename: string; bank: string | null; period_start: string; period_end: string;
     first_date: string; last_date: string; first_balance: string; last_balance: string; rows: number;
@@ -122,3 +123,27 @@ export interface Quality {
 
 export interface Health { status: string; ocr_enabled: boolean; auth: boolean; llm: string | null; samples: number }
 export interface SamplesResult { loaded: number; statements: { filename: string; id?: string; result: string }[] }
+
+export interface Tx {
+  statement_id: string; filename: string; row: number; date: string; description: string; ref: string | null;
+  debit: string | null; credit: string | null; balance: string; type: string; category: string;
+}
+export interface TxPage {
+  has_data: boolean; matched: number; limit: number; offset: number; rows: Tx[]; notes: string[];
+  totals: { debit: string; credit: string; debits: number; credits: number };
+  facets: { statements: { id: string; filename: string }[]; types: string[]; categories: string[] };
+}
+export interface CategoryRule { id: number; pattern: string; category: string; matches: number }
+export interface Categories {
+  rules: CategoryRule[];
+  suggestions: { pattern: string; category: string; matches: number }[];
+  coverage: { total: number; categorised: number };
+}
+export interface RecurringItem {
+  label: string; rail: string | null; direction: "debit" | "credit"; count: number; months: number;
+  amount_kind: "same" | "close" | "varies"; low: string; high: string; total: string; day_of_month: number;
+  first_date: string; last_date: string; dates: string[];
+}
+export interface Recurring {
+  has_data: boolean; months_covered: number; items: RecurringItem[]; rules: string; note: string; reason?: string;
+}

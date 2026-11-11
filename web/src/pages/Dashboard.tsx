@@ -1,15 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
-import { Donut, MonthBars } from "../components/charts";
+import { Donut, MonthBars, type Slice } from "../components/charts";
 import { SamplesCard } from "../components/Samples";
 import { Empty, Tile } from "../components/Shell";
-import { bankName, count, rupees, shortDate } from "../lib/format";
-import { parsePaise } from "../lib/money";
+import { bankName, count, rupees, shortDate, typeColour, typeName } from "../lib/format";
+import { fromPaise, parsePaise } from "../lib/money";
 import type { Overview } from "../types";
+
+const UNCATEGORISED = "Uncategorised";
+const TOP = 7;
+const CAT_COLOURS = ["#5B2EFF", "#FF7A59", "#16113A", "#7DC9FF", "#D6F54A", "#FFE59A", "#0E9F6E"];   // no two alike; lilac is kept for Uncategorised
+
+/** The biggest categories get a slice each; the rest are added together in exact paise as "Other categories". */
+function categorySlices(cats: Overview["by_category"]): Slice[] {
+  const colour = (c: string, i: number) => (c === UNCATEGORISED ? "#C9C3EE" : CAT_COLOURS[i % CAT_COLOURS.length]);
+  const head = cats.slice(0, TOP).map((c, i) => ({ key: c.category, label: c.category, debit: c.debit, colour: colour(c.category, i) }));
+  const rest = cats.slice(TOP);
+  if (rest.length === 0) return head;
+  const sum = rest.reduce((a, c) => a + (parsePaise(c.debit) ?? 0n), 0n);
+  return [...head, { key: "__rest", label: "Other categories", debit: fromPaise(sum), colour: "#9C99B0" }];
+}
 
 export function Dashboard() {
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"type" | "category">("type");
   const load = useCallback(() => api.overview().then(setData).catch((e: Error) => setError(e.message)), []);
   useEffect(() => { void load(); }, [load]);
 
@@ -49,8 +64,17 @@ export function Dashboard() {
           <MonthBars months={data.by_month} />
         </Tile>
         <Tile className="bt-sky c5">
-          <h3>Where it went</h3><p className="bt-sub">Share of all debits, by transaction type.</p>
-          <Donut types={data.by_type} total={t.debit} />
+          <div className="bt-rhead"><h3>Where it went</h3>
+            {data.by_category.length > 0 && (
+              <div className="bt-seg" role="group" aria-label="Group spending by">
+                <button type="button" aria-pressed={view === "type"} onClick={() => setView("type")}>Type</button>
+                <button type="button" aria-pressed={view === "category"} onClick={() => setView("category")} data-testid="by-category">Category</button>
+              </div>)}
+          </div>
+          <p className="bt-sub">{view === "category" && data.by_category.length > 0 ? "Share of all debits, by the categories you defined." : "Share of all debits, by transaction type."}</p>
+          {view === "category" && data.by_category.length > 0
+            ? <Donut slices={categorySlices(data.by_category)} total={t.debit} what="category" />
+            : <Donut slices={data.by_type.map((x) => ({ key: x.type, label: typeName(x.type), debit: x.debit, colour: typeColour(x.type) }))} total={t.debit} what="type" />}
         </Tile>
 
         <Tile className="c6">

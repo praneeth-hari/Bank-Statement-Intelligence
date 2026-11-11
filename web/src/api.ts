@@ -1,4 +1,4 @@
-import type { Action, Health, Overview, SamplesResult, QueryResponse, Quality, ReviewResponse, StatementDetail, StatementSummary } from "./types";
+import type { Action, Categories, Health, Overview, Recurring, SamplesResult, TxPage, QueryResponse, Quality, ReviewResponse, StatementDetail, StatementSummary } from "./types";
 
 export const API_BASE: string = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -53,6 +53,11 @@ export const api = {
   health: () => request<Health>("/health"),
   loadSamples: () => request<SamplesResult>("/samples", json("POST")),
   transactionsUrl: () => `${API_BASE}/transactions.csv`,
+  transactions: (params: URLSearchParams) => request<TxPage>(`/transactions?${params}`),
+  categories: () => request<Categories>("/categories"),
+  addCategory: (pattern: string, category: string) => request<{ id: number }>("/categories", json("POST", { pattern, category })),
+  removeCategory: (id: number) => request<void>(`/categories/${id}`, { method: "DELETE" }),
+  recurring: () => request<Recurring>("/recurring"),
   overview: () => request<Overview>("/overview"),
   quality: () => request<Quality>("/quality"),
   ask: (question: string) => request<QueryResponse>("/query", json("POST", { question })),
