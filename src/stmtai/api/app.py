@@ -37,6 +37,7 @@ from ..llm.client import LLMUnavailable, from_spec
 from ..llm.fallback import apply_rules, llm_fallback
 from ..query.ask import ask as ask_question
 from ..query.data import rows_from_extraction
+from ..query.engine import run as run_query
 from . import service
 from .service import ACTIONS, Store, apply_corrections, locate
 
@@ -336,6 +337,24 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             out["reason"] = res.reason
             return out
         a = res.answer
+        if res.query.aggregate == "last" and len(approved) > 1:
+            # A balance belongs to one account: answer once per statement instead of picking one and calling it "the" balance.
+            per = []
+            for rec in approved:
+                mine = [r for r in rows if r.statement_id == rec["id"]]
+                one = run_query(res.query, mine)
+                if one.kind == "number":
+                    per.append((rec["filename"], one.value, one.rows[0]))
+            if per:
+                out["notes"] = [n for n in out["notes"] if "different accounts" not in n]
+                out["notes"].append("Each statement is shown separately, because a balance belongs to one account.")
+                out.update(interpretation=res.interpretation + ", per statement", query=res.query.model_dump(mode="json"),
+                           kind="groups", unit=a.unit, matched=a.matched, value=None,
+                           groups=[{"key": name, "value": service.to_json(v)} for name, v, _ in per],
+                           rows=[{"statement_id": r.statement_id, "filename": r.filename, "row": r.row, "date": r.date.isoformat(),
+                                  "description": r.description, "debit": service.to_json(r.debit), "credit": service.to_json(r.credit),
+                                  "balance": service.to_json(r.balance)} for _, _, r in per])
+                return out
         out.update(interpretation=res.interpretation, query=res.query.model_dump(mode="json"), kind=a.kind, unit=a.unit,
                    matched=a.matched, value=service.to_json(a.value),
                    groups=[{"key": k, "value": service.to_json(v)} for k, v in a.groups],

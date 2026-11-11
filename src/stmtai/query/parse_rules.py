@@ -30,7 +30,7 @@ UNSUPPORTED = re.compile(r"\b(will i|going to|forecast|predict|should i|can i af
 DATA_CUE = re.compile(r"\b(transactions?|payments?|balance|statement|account|money|rupees|spen[dt]|spending|paid|pay|"
                       r"debits?|credits?|withdraw\w*|deposit\w*|income|expenses?|received|earned|salary|upi|imps|neft|"
                       r"pos|atm|emi|loan|charges|fees?|interest|cash|bought|purchases?|outgoings?|outflows?|inflows?|came in|come in|"
-                      r"coming in|expensive)\b|₹")
+                      r"coming in|expensive|how much|net)\b|₹")
 
 CATEGORY_WORDS = {
     "upi": r"\bupi\b", "imps": r"\bimps\b", "neft": r"\bneft\b", "pos": r"\bpos\b|card (?:swipes?|purchases?|payments?)",
@@ -240,6 +240,8 @@ def parse(question: str, rows: list[Row], today: Optional[dt.date] = None) -> Pa
     elif asc:
         aggregate = "min"
         measure = "balance" if balance_w else "credit" if credit_w and not debit_w else "debit"
+    elif balance_w:
+        aggregate, measure = "last", "balance"   # "balance" on its own means where the account stands
     elif net_w:
         aggregate, measure = "sum", "net"
     else:

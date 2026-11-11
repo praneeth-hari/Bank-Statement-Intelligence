@@ -320,7 +320,8 @@ How it works, and why it is built this way:
   ignoring it would answer a different question. Ambiguous ones are refused with the reason, for example
   "average per month" (average transaction, or average of the monthly totals?).
 - **Honest about what it combined.** Several statements are combined unless `statement_ids` narrows it, and the
-  reply says they may be different accounts. Rows without a date, balance or a single amount are left out and
+  reply says they may be different accounts. A balance is the exception: it belongs to one account, so it is
+  answered once per statement instead of picking one. Rows without a date, balance or a single amount are left out and
   counted.
 
 In the UI the question box sits on the statement list page, because a question spans every approved statement.
@@ -512,7 +513,7 @@ src/stmtai/
     parse.py       date and money parsing
     models.py      extraction output with bounding boxes and confidences
   synth/           transactions, PDF layouts, scan degradation, dataset CLI
-tests/             287 Python tests (plus 15 in web/), including negative controls for the evaluator itself
+tests/             290 Python tests (plus 15 in web/), including negative controls for the evaluator itself
 samples/           a few generated documents
 web/               React + TypeScript review UI (Vite); e2e/smoke.mjs drives it in a real browser
 notebooks/         Colab notebook for GPU-only OCR engines

@@ -11,6 +11,6 @@ const CAPS = new Set(["upi", "imps", "neft", "pos", "atm", "emi"]);
 
 /** Group keys come from the API in lower case: transaction types are acronyms, the rest are words. */
 export function groupLabel(key: string): string {
-  if (/^\d{4}-\d{2}$/.test(key)) return key;
+  if (/^\d{4}-\d{2}$/.test(key) || /[._/]/.test(key)) return key;   // months and file names are shown as they are
   return CAPS.has(key) ? key.toUpperCase() : key.charAt(0).toUpperCase() + key.slice(1);
 }

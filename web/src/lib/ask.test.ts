@@ -20,6 +20,7 @@ describe("query answers on screen", () => {
     expect(groupLabel("emi")).toBe("EMI");
     expect(groupLabel("charges")).toBe("Charges");
     expect(groupLabel("2025-04")).toBe("2025-04");
+    expect(groupLabel("classic_grid_00.pdf")).toBe("classic_grid_00.pdf");
     expect(groupLabel("harsh chahal")).toBe("Harsh chahal");
   });
 });

@@ -122,6 +122,18 @@ def test_interest_is_money_in_unless_it_is_a_loan_charge():
     assert q_of("interest charged on my loan").measure == "debit"
 
 
+def test_a_bare_balance_is_the_last_balance_not_a_sum_of_debits():
+    q = q_of("balance")
+    assert (q.aggregate, q.measure) == ("last", "balance")
+    assert run(q, ROWS).value == D("56459.75")
+
+
+def test_how_much_and_net_are_enough_to_know_it_is_about_money():
+    assert q_of("how much in April 2025").date_from == dt.date(2025, 4, 1)
+    assert q_of("net change").measure == "net"
+    assert not ask("how much is a bitcoin", ROWS, mode="rules").answered
+
+
 def test_plurals_and_the_end_balance():
     assert q_of("total taken out at ATMs").categories == ["atm"]
     q = q_of("what was left in my account at the end")
@@ -324,6 +336,19 @@ def test_several_statements_are_combined_and_said_so(tmp_path, data):
     assert any("different accounts" in n for n in r["notes"])
     one = client.post("/query", json={"question": "how many credits", "statement_ids": [pairs[0][0]]}).json()
     assert len(one["statements"]) == 1
+
+
+def test_a_balance_across_statements_is_given_per_statement(tmp_path, data):
+    client, pairs = approved_client(tmp_path, data, n=2)
+    for sid, _ in pairs:
+        client.post(f"/statements/{sid}/approve")
+    r = client.post("/query", json={"question": "what is my balance"}).json()
+    assert r["answered"] and r["kind"] == "groups" and len(r["groups"]) == 2
+    for g, (sid, lb) in zip(sorted(r["groups"], key=lambda g: g["key"]), sorted(pairs, key=lambda p: p[1].doc_id)):
+        assert D(g["value"]) == lb.statement.transactions[-1].balance and g["key"] == lb.doc_id + ".pdf"
+    assert "separately" in " ".join(r["notes"]) and not any("different accounts" in n for n in r["notes"])
+    one = client.post("/query", json={"question": "what is my balance", "statement_ids": [pairs[0][0]]}).json()
+    assert one["kind"] == "number" and D(one["value"]) == pairs[0][1].statement.transactions[-1].balance
 
 
 def test_parser_rules_never_calls_the_model(tmp_path, data):
